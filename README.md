@@ -12,7 +12,7 @@
     - [X] toolbar 状态控制按钮逻辑
 - research
     - [X] 高级参数UI布局
-    - [ ] toolbar 状态控制按钮逻辑
+    - [X] toolbar 状态控制按钮逻辑
 
 - admin
     - [ ] 关于 从excel批量导入账号

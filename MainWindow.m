@@ -181,7 +181,7 @@ classdef MainWindow < matlab.apps.AppBase
         %% aboutPanel
         aboutPanel                  matlab.ui.container.Panel
 
-        %% ========================================================================== %
+        %% 成员变量
 
         m_lastError
         m_dbCenter                  DBCenter
@@ -843,7 +843,7 @@ classdef MainWindow < matlab.apps.AppBase
             app.basicParamSaveButton.Layout.Row = 8;
             app.basicParamSaveButton.Layout.Column = 2;
             app.basicParamSaveButton.Text = '保存';
-            app.basicParamSaveButton.ButtonPushedFcn = createCallbackFcn(app,@basicParamSaveBtnPushed,true);
+            app.basicParamSaveButton.ButtonPushedFcn = createCallbackFcn(app,@paramSaveBtnPushed,true);
 
             %% advanParamPanel
             app.advanParamPanel = uipanel(app.mainLayout);
@@ -1053,7 +1053,7 @@ classdef MainWindow < matlab.apps.AppBase
             app.energyRealtimeLabel.HorizontalAlignment = 'right';
             app.energyRealtimeLabel.Layout.Row = 1;
             app.energyRealtimeLabel.Layout.Column = 1;
-            app.energyRealtimeLabel.Text = '实时能耗';
+            app.energyRealtimeLabel.Text = '能耗统计';
 
             app.energyRealtimeTextArea = uitextarea(app.energyLayout);
             app.energyRealtimeTextArea.Layout.Row = 1;
@@ -1064,7 +1064,7 @@ classdef MainWindow < matlab.apps.AppBase
             app.advanParamSaveButton.Layout.Row = 6;
             app.advanParamSaveButton.Layout.Column = 4;
             app.advanParamSaveButton.Text = '保存';
-            app.advanParamSaveButton.ButtonPushedFcn = createCallbackFcn(app,@advanParamSaveBtnPushed,true);
+            app.advanParamSaveButton.ButtonPushedFcn = createCallbackFcn(app,@paramSaveBtnPushed,true);
 
             %% visualPanel
             app.visualPanel = uipanel(app.mainLayout);
@@ -1290,6 +1290,7 @@ classdef MainWindow < matlab.apps.AppBase
             app.currentParamsDropDown.Items = app.m_jsonHelper.m_paramsNameList; % 读取本地所有参数集名
             app.currentParamsDropDown.Value = 'default';
             currentParamsValueChanged(app); % 手动调用
+            app.energyRealtimeTextArea.Value = '';
 
             % 可视化
             cla(app.animeAxes);
@@ -1308,77 +1309,82 @@ classdef MainWindow < matlab.apps.AppBase
             legend(app.velocityAxes,'off');
             legend(app.errorAxes,'off');
             legend(app.controlInputAxes,'off');
-            % 典型对比
-            % 参数对比
+
             % 历史数据
         end
 
         function calculateResult(app)
+            %% 基本参数
+            % 仿真基础参数
             frequency = app.frequencySpinner.Value;
             totalTime = app.totalTimeSpinner.Value;
             timeVector = 0:frequency:totalTime;
             stepNum = length(timeVector);
+
+            % 列车参数
             trainNum = app.trainNumSpinner.Value;
             trainLength = app.trainLengthSpinner.Value;
             trainSpacing = app.trainSpacingSpinner.Value;
-            relaLeaderPosiErr = zeros(trainNum,1);
+            leaderGaps = zeros(trainNum,1);
             for i = 1:trainNum
-                relaLeaderPosiErr(i) = -(i-1)*(trainSpacing+trainLength);
+                leaderGaps(i) = -(i-1)*(trainSpacing+trainLength);
             end
             startPosi = app.startPosiEditField.Value;
             startVelo = app.startVeloEditField.Value;
-            trajDesign = app.trajDesignDropDown.Value;
-            trajPosi = app.trajPosiEditField.Value;
-            trajVelo = app.trajVeloEditField.Value;
-            
+
+            % 初始化各状态
             position = zeros(trainNum,stepNum);
             velocity = zeros(trainNum,stepNum);
             spacingError = zeros(trainNum,stepNum);
             controlInput = zeros(trainNum,stepNum);
             acceleration = zeros(trainNum,stepNum);
-
             position(:,1) = str2double(split(startPosi, ',')); % 初始位置
             velocity(:,1) = str2double(split(startVelo, ',')); % 初始速度
 
+            % 领航车轨迹设计
+            trajDesign = app.trajDesignDropDown.Value;
+            trajPosi = app.trajPosiEditField.Value;
+            trajVelo = app.trajVeloEditField.Value;
             if strcmp(trajDesign,'按速度')
+                % 计算领航车速度轨迹
                 leaderStartVelo = velocity(1,1);
                 leaderVeloArr = leaderStartVelo*ones(1,stepNum);
-
                 pairsCell = strsplit(trajVelo, ';'); 
                 for i = 1:numel(pairsCell)
                     pairCell= split(pairsCell(i),',');
-                
                     time =str2double(pairCell{1}(2:end));
                     step = round(time/frequency);
                     velo = str2double(pairCell{2});
                     leaderVeloArr(step:stepNum) = velo;
                 end
 
+                % 设置领航车轨迹
                 for i = 2:stepNum
-                    velocity(1,i)=leaderVeloArr(i);
-                    position(1,i)=position(1,i-1)+leaderVeloArr(i)*frequency;  
+                    position(1,i) = position(1,i-1)+leaderVeloArr(i-1)*frequency; 
+                    velocity(1,i) = leaderVeloArr(i);
+                    acceleration(1,i) = round((velocity(1,i)-velocity(1,i-1))/frequency);
                 end
 
             elseif strcmp(trajDesign,'按位置')
+                % 计算领航车位置轨迹
                 leaderStartPosi = position(1,1);
                 leaderPosiArr = leaderStartPosi*ones(1,stepNum);
-
                 pairsCell = strsplit(trajPosi, ';');
                 timeKeydots = zeros(numel(pairsCell) + 1, 1);
                 posiKeydots = zeros(numel(pairsCell) + 1, 1);
                 timeKeydots(1) = 0;
                 posiKeydots(1) = leaderStartPosi; 
 
+                % 分离出关键点对应时间和位置
                 for i = 1:numel(pairsCell)
                     pairCell= split(pairsCell(i),',');
-
                     time = str2double(pairCell{1}(2:end));
                     posi = str2double(pairCell{2});
-
                     timeKeydots(i+1) = time;
                     posiKeydots(i+1) = posi;
                 end
 
+                % 根据关键点拟合出领航车位置曲线
                 for i = 1:stepNum
                     currentTime = timeVector(i);
                     if currentTime<=timeKeydots(end)
@@ -1388,13 +1394,16 @@ classdef MainWindow < matlab.apps.AppBase
                     end             
                 end
 
+                % 设置领航车轨迹
                 for i = 2:stepNum
                     position(1,i) = round(leaderPosiArr(i),1);
                     velocity(1,i) = round((leaderPosiArr(i)-leaderPosiArr(i-1))/frequency,1);
+                    acceleration(1,i) = round((velocity(1,i)-velocity(1,i-1))/frequency);
                 end
 
             end     
             
+            % 通信拓扑
             topology = app.currentTopologyDropDown.Value;
             A = zeros(trainNum,trainNum);
             switch topology
@@ -1428,73 +1437,252 @@ classdef MainWindow < matlab.apps.AppBase
                 otherwise            
             end
 
+            % 控制参数
             Kp = app.KpSpinner.Value;
             Kv = app.KvSpinner.Value;
+
+            % 物理性质
             veloLimit = app.veloLimitSpinner.Value;
-            controlLimit = app.ctrlLimitSpinner.Value;
+            ctrlLimit = app.ctrlLimitSpinner.Value;
             c0 = app.c0Spinner.Value;
             c1 = app.c1Spinner.Value;
             c2 = app.c2Spinner.Value; 
 
-            % 遍历每一步
-            for stepIndex = 1:stepNum-1
+            %% 高级参数
+            advanSwitch = app.advanParamSwitch.Value;
+            isAdvan = false;
+            if strcmp(advanSwitch,'On')
+                isAdvan = true;
+            end     
+
+            rng(0);
+            % 延时参数
+            delaySwitch = app.delayParamSwitch.Value;
+            isDelay = false;
+            if strcmp(delaySwitch,'On')
+                isDelay = true;
+            end  
+
+            delayMode = 0;
+            switch app.delayModeDropDown.Value
+                case '无延时补偿'
+                    delayMode = 0;
+                case '匀速预测'
+                    delayMode = 1;
+                case 'Smith预估器'
+                    delayMode = 2;    
+                otherwise
+            end
+            
+            fixDelay = app.fixDelaySpinner.Value;
+            flucDelay = app.flucDelaySpinner.Value;
+            if fixDelay == 0
+                flucDelay = 0;
+            end    
+            if flucDelay > 10*frequency
+                flucDelay = 10*frequency;
+            end    
+            fixDelayStep = round(fixDelay/frequency);
+            flucDelayStep = round(flucDelay/frequency);
+
+            delaySteps = zeros(trainNum,stepNum);
+            if flucDelayStep == 0
+                % 固定延时
+                for i=2:trainNum
+                    delaySteps(i,:) = fixDelayStep;
+                end       
+            else
+                % 波动延时
+                randFlucStep = randi([-flucDelayStep,flucDelayStep],trainNum,stepNum);
+                for i=2:trainNum
+                    delaySteps(i,:) = max(0, fixDelayStep + randFlucStep(i,:));   
+                end  
+            end
+
+            % 干扰参数
+            noiseSwitch = app.noiseParamSwitch.Value;
+            isNoise = false;
+            if strcmp(noiseSwitch,'On')
+                isNoise = true;
+            end   
+            
+            noiseMode = 0;
+            if app.noiseModeDropDown.Value == '干扰观测器'
+                noiseMode = 1;
+            end    
+
+            frictionNoise = app.frictionNoiseSpinner.Value;
+            elecNoise = app.elecNoiseSpinner.Value;
+            noises = zeros(trainNum,stepNum);
+            noises(:,:) = randi([0 frictionNoise],trainNum,stepNum) + randi([-elecNoise elecNoise],trainNum,stepNum);
+
+            alpha = app.alphaSpinner.Value;         % 低通滤波系数（0 < alpha <= 1，越小滤波越强）
+            noisesEsti = zeros(trainNum, stepNum);  % 扰动估计值
+
+            % 能耗参数
+            energySwitch = app.energyParamSwitch.Value;
+            isEnergy = false;
+            if strcmp(energySwitch,'On')
+                isEnergy = true;
+            end    
+
+            % 教学用户直接禁止高级参数
+            if app.m_currentScenario == 'teaching'
+                isAdvan = false;
+            end
+
+            %% 仿真循环 遍历每一步
+            for stepIdx = 1:stepNum-1
                 % 遍历跟随车
-                for trainIndex = 2:trainNum
-                    allPosiErr = 0;
-                    allVeloErr = 0;
-                    for neighborTrainIndex = 1:trainNum
-                        if A(trainIndex,neighborTrainIndex) == 1
-                            % 计算当前跟随车和邻车的
+                for followIdx = 2:trainNum
+                    posiErr = 0;
+                    veloErr = 0;
+
+                    % 遍历该跟随车对应交互车
+                    for interactIdx = 1:trainNum
+                        if A(followIdx,interactIdx) == 1
+
+                            x_interactRead = 0;
+                            v_interactRead = 0;
+                            if isAdvan&&isDelay
+                                % 有延时 延时获取到的对应原本的实际步数
+                                d = delaySteps(followIdx, stepIdx);
+                                delayPrevStep = max(1, stepIdx - d);
+
+                                switch delayMode
+                                    case 0
+                                        % 不补偿
+                                        x_interactRead = position(interactIdx,delayPrevStep);
+                                        v_interactRead = velocity(interactIdx,delayPrevStep);
+                                    case 1
+                                        % 匀速预测 从原本的步数补偿到现在的仿真步数 认为交互车在未知的时间里一直匀速
+                                        x_interactRead = position(interactIdx,delayPrevStep) + velocity(interactIdx,delayPrevStep)*d*frequency;
+                                        v_interactRead = velocity(interactIdx,delayPrevStep);
+                                    case 2    
+                                        % Smith预估器 计算原本的实际时刻及前2步的加速度
+                                        a = 0;
+                                        if delayPrevStep >= 3
+                                            x_1 = position(interactIdx,delayPrevStep-2);
+                                            x_2 = position(interactIdx,delayPrevStep-1);
+                                            x_3 = position(interactIdx,delayPrevStep);
+                                            a = (x_1 - 2*x_2 + x_3) / (frequency^2);
+                                        end    
+
+                                        % 匀加速预测
+                                        x_interactPrev = position(interactIdx,delayPrevStep);
+                                        v_interactPrev = velocity(interactIdx,delayPrevStep);
+                                        delay = d*frequency;
+                                        x_interactRead = x_interactPrev + v_interactPrev*delay + 0.5*a*(delay^2);
+                                        v_interactRead = v_interactPrev + a*delay;
+                                        
+                                end
+                            else
+                                % 无延时
+                                x_interactRead = position(interactIdx,stepIdx);
+                                v_interactRead = velocity(interactIdx,stepIdx);
+                            end        
+
                             % 位置误差 = 实际车距 - 期望车距 =  (邻车实际位置 - 跟随车实际位置）- (邻车期望位置 - 跟随车期望位置)
-                            nowSpacing = position(neighborTrainIndex,stepIndex) - position(trainIndex,stepIndex);
-                            expectSpacing = relaLeaderPosiErr(neighborTrainIndex) - relaLeaderPosiErr(trainIndex);
-                            posiErr = nowSpacing - expectSpacing;
+                            nowSpacing = x_interactRead - position(followIdx,stepIdx);
+                            expSpacing = leaderGaps(interactIdx) - leaderGaps(followIdx);
+                            currentPosiErr = nowSpacing - expSpacing;
 
-                            % 速度误差 = 邻车速 - 跟随车速
-                            veloErr = velocity(neighborTrainIndex,stepIndex) - velocity(trainIndex,stepIndex);
+                            % 速度偏差 = 预测的交互车速度 - 当前跟随车速度
+                            currentVeloErr = v_interactRead - velocity(followIdx,stepIdx);
 
-                            allPosiErr = allPosiErr + posiErr;
-                            allVeloErr = allVeloErr + veloErr;  
+                            % 累计偏差
+                            posiErr = posiErr + currentPosiErr;
+                            veloErr = veloErr + currentVeloErr;  
                         end    
                     end 
-                    
+
                     % 计算控制输入
-                    if (Kp*allPosiErr + Kv*allVeloErr) > controlLimit
-                        controlInput(trainIndex,stepIndex) = controlLimit;
-                    elseif (Kp*allPosiErr + Kv*allVeloErr) < -controlLimit
-                        controlInput(trainIndex,stepIndex) = -controlLimit;
+                    ctrl_actual = 0;
+                    if isAdvan&&isNoise
+                        % 有干扰
+                        if noiseMode == 1
+                            % 有补偿 计算干扰观测器估计
+                            if stepIdx > 1
+                                % 计算实际加速度（从 stepIdx-1 到 stepIdx）
+                                accel_actual = (velocity(followIdx, stepIdx) - velocity(followIdx, stepIdx-1)) / frequency;
+                                % 原始扰动观测值 = 实际加速度 - 上一时刻施加的控制量
+                                noiseRaw = accel_actual - controlInput(followIdx, stepIdx-1);
+                                % 一阶低通滤波更新扰动估计
+                                noisesEsti(followIdx, stepIdx) = (1-alpha) * noisesEsti(followIdx, stepIdx-1) + alpha * noiseRaw;
+                            end
+
+                            ctrl_NoDob = Kp*posiErr + Kv*veloErr  + noises(followIdx,stepIdx);
+                            % 实际补偿后需要的控制输入 = 有扰动控制输入 - 估计扰动
+                            ctrl_actual = ctrl_NoDob - noisesEsti(followIdx, stepIdx);
+
+                        else
+                            % 无补偿
+                            ctrl_actual = Kp*posiErr + Kv*veloErr + noises(followIdx,stepIdx);
+                        end       
                     else
-                        controlInput(trainIndex,stepIndex) = Kp*allPosiErr + Kv*allVeloErr;
+                        % 无干扰
+                        ctrl_actual = Kp*posiErr + Kv*veloErr;
+                    end        
+
+                    % 控制输入限幅
+                    if ctrl_actual > ctrlLimit
+                        controlInput(followIdx,stepIdx) = ctrlLimit;
+                    elseif ctrl_actual < -ctrlLimit
+                        controlInput(followIdx,stepIdx) = -ctrlLimit;
+                    else
+                        controlInput(followIdx,stepIdx) = ctrl_actual;
                     end
 
                     % 计算加速度
-                    acceleration(trainIndex,stepIndex) = controlInput(trainIndex,stepIndex) - c0 - c1*(velocity(trainIndex,stepIndex)) - c2*((velocity(trainIndex,stepIndex))^2);
+                    acceleration(followIdx,stepIdx) = controlInput(followIdx,stepIdx) - c0 - c1*(velocity(followIdx,stepIdx)) - c2*((velocity(followIdx,stepIdx))^2);
 
-                    % 计算速度和位置
-                    velocity(trainIndex,stepIndex+1) = velocity(trainIndex,stepIndex) + acceleration(trainIndex,stepIndex)*frequency;
-                    position(trainIndex,stepIndex+1) = position(trainIndex,stepIndex) + velocity(trainIndex,stepIndex)*frequency;
-
-                    % 速度限制
-                    if velocity(trainIndex,stepIndex+1) > veloLimit
-                        velocity(trainIndex,stepIndex+1) = veloLimit;
-                    elseif velocity(trainIndex,stepIndex+1) < -veloLimit
-                        velocity(trainIndex,stepIndex+1) = -veloLimit;
+                    % 计算速度
+                    velo_actual = velocity(followIdx,stepIdx) + acceleration(followIdx,stepIdx)*frequency;
+                    
+                    % 速度限幅
+                    if velo_actual > veloLimit
+                        velocity(followIdx,stepIdx+1) = veloLimit;
+                    elseif velo_actual < -veloLimit
+                        velocity(followIdx,stepIdx+1) = -veloLimit;
+                    else
+                        velocity(followIdx,stepIdx+1) = velo_actual;    
                     end
 
+                    % 计算位置
+                    position(followIdx,stepIdx+1) = position(followIdx,stepIdx) + velocity(followIdx,stepIdx+1)*frequency + 0.5*acceleration(followIdx,stepIdx)*(frequency^2);
                 end 
             end
 
             % 计算error
             for trainIndex = 2:trainNum
                 % 计算跟踪误差：实际位置 - (领航车位置 + 期望偏移)
-                spacingError(trainIndex,:) = position(trainIndex,:) - (position(1,:) + relaLeaderPosiErr(trainIndex));
+                spacingError(trainIndex,:) = position(trainIndex,:) - (position(1,:) + leaderGaps(trainIndex));
             end
 
-            app.m_lastResult = {position,velocity,spacingError,controlInput,timeVector,trainLength};
+            % 计算每步显示的实现能耗
+            energy = zeros(trainNum,stepNum);
+            realtimeEnergyChars = strings(1, stepNum);
+            if isAdvan&&isEnergy
+                % 有能耗统计 计算每步累计能耗
+                for follweIdx = 2:trainNum
+                    energy(follweIdx,1) = (controlInput(follweIdx,1)^2)*frequency;
+                    for stepIdx = 1:stepNum-1
+                        energy(follweIdx,stepIdx+1) = energy(follweIdx,stepIdx) + ((controlInput(follweIdx,stepIdx+1)^2)*frequency);
+                    end
+                end
+
+                % 计算实时能耗
+                for stepIdx = 1:stepNum
+                    for trainIdx = 2:trainNum
+                        realtimeEnergyChars(stepIdx) = realtimeEnergyChars(stepIdx) + sprintf("跟随车 %d 能耗: %.2f\t(m²/s³)\n",trainIdx, energy(trainIdx,stepIdx));
+                    end
+                end
+
+            end        
+
+            app.m_lastResult = {position,velocity,spacingError,controlInput,timeVector,trainLength,energy,realtimeEnergyChars};
 
         end    
-
-        %--------------------------------------------------------------------
 
         function drawResult(app)
 
@@ -1532,10 +1720,6 @@ classdef MainWindow < matlab.apps.AppBase
 
 
         end    
-
-        % ==================================================================== %
-        % ==================================================================== %
-        % ==================================================================== %
 
         function logoutBtnPushed(app,event)
             choice = uiconfirm(app.uiFigure,'确定要注销账户返回登录页面吗?','退出登录',"Options",["确定退出","我再想想"],"DefaultOption",2,"CancelOption",2);
@@ -1679,29 +1863,41 @@ classdef MainWindow < matlab.apps.AppBase
             
         end    
 
-        function basicParamSaveBtnPushed(app,event)
+        function paramSaveBtnPushed(app,event)
             app.isParamSaved = true;
             app.uiFigure.Name = '多列车协同控制系统仿真平台';
 
             paramsName = app.currentParamsDropDown.Value;
-            param_frequency = app.frequencySpinner.Value;
-            param_totalTime = app.totalTimeSpinner.Value;
-            param_trainNum = app.trainNumSpinner.Value;
-            param_trainLength = app.trainLengthSpinner.Value;
-            param_trainSpacing = app.trainSpacingSpinner.Value;
-            param_startPosi = app.startPosiEditField.Value;
-            param_startVelo = app.startVeloEditField.Value;
-            param_trajDesign = app.trajDesignDropDown.Value;
-            param_trajPosi = app.trajPosiEditField.Value;
-            param_trajVelo = app.trajVeloEditField.Value;
-            param_topology = app.currentTopologyDropDown.Value;
-            param_Kp = app.KpSpinner.Value;
-            param_Kv = app.KvSpinner.Value;
-            param_veloLimit = app.veloLimitSpinner.Value;
-            param_controlLimit = app.ctrlLimitSpinner.Value;
-            param_c0 = app.c0Spinner.Value;
-            param_c1 = app.c1Spinner.Value;
-            param_c2 = app.c2Spinner.Value;
+            basic_frequency = app.frequencySpinner.Value;
+            basic_totalTime = app.totalTimeSpinner.Value;
+            basic_trainNum = app.trainNumSpinner.Value;
+            basic_trainLength = app.trainLengthSpinner.Value;
+            basic_trainSpacing = app.trainSpacingSpinner.Value;
+            basic_startPosi = app.startPosiEditField.Value;
+            basic_startVelo = app.startVeloEditField.Value;
+            basic_trajDesign = app.trajDesignDropDown.Value;
+            basic_trajPosi = app.trajPosiEditField.Value;
+            basic_trajVelo = app.trajVeloEditField.Value;
+            basic_topology = app.currentTopologyDropDown.Value;
+            basic_Kp = app.KpSpinner.Value;
+            basic_Kv = app.KvSpinner.Value;
+            basic_veloLimit = app.veloLimitSpinner.Value;
+            basic_ctrlLimit = app.ctrlLimitSpinner.Value;
+            basic_c0 = app.c0Spinner.Value;
+            basic_c1 = app.c1Spinner.Value;
+            basic_c2 = app.c2Spinner.Value;
+            advan_switch = app.advanParamSwitch.Value;
+            advan_delaySwitch = app.delayParamSwitch.Value;
+            advan_delayMode = app.delayModeDropDown.Value;
+            advan_fixDelay = app.fixDelaySpinner.Value;
+            advan_flucDelay = app.flucDelaySpinner.Value;
+            advan_noiseSwitch = app.noiseParamSwitch.Value;
+            advan_noiseMode = app.noiseModeDropDown.Value;
+            advan_frictionNoise = app.frictionNoiseSpinner.Value;
+            advan_elecNoise = app.elecNoiseSpinner.Value;
+            advan_alpha = app.alphaSpinner.Value;
+            advan_energySwitch = app.energyParamSwitch.Value;
+            
 
             paramsStruct = struct();
             basicParamStruct = struct();
@@ -1712,40 +1908,45 @@ classdef MainWindow < matlab.apps.AppBase
             trajVeloStruct = struct();
             ctrlParamStruct = struct();
             physicalStruct = struct();
+            advanParamStruct = struct();
+            delayParamStruct = struct();
+            noiseParamStruct = struct();
+            energyParamStruct = struct();
 
-            simulBasisStruct.frequency = param_frequency;
-            simulBasisStruct.totalTime = param_totalTime;
-            trainParamStruct.trainNum = param_trainNum;
-            trainParamStruct.trainLength = param_trainLength;
-            trainParamStruct.trainSpacing = param_trainSpacing;
-            trainParamStruct.startPosi = str2double(split(param_startPosi, ','));
-            trainParamStruct.startVelo = str2double(split(param_startVelo, ','));
 
-            leaderTrajStruct.trajDesign = param_trajDesign;
+            simulBasisStruct.frequency = basic_frequency;
+            simulBasisStruct.totalTime = basic_totalTime;
+            trainParamStruct.trainNum = basic_trainNum;
+            trainParamStruct.trainLength = basic_trainLength;
+            trainParamStruct.trainSpacing = basic_trainSpacing;
+            trainParamStruct.startPosi = str2double(split(basic_startPosi, ','));
+            trainParamStruct.startVelo = str2double(split(basic_startVelo, ','));
+
+            leaderTrajStruct.trajDesign = basic_trajDesign;
             
-            posiPairsCell = strsplit(param_trajPosi, ';');
+            posiPairsCell = strsplit(basic_trajPosi, ';');
             for index = 1:numel(posiPairsCell)
                 pairCell = split(posiPairsCell(index),',');
                 trajPosiStruct.(pairCell{1}) = str2double(pairCell{2});
             end    
-            veloPairsCell = strsplit(param_trajVelo, ';');
+            veloPairsCell = strsplit(basic_trajVelo, ';');
             for index = 1:numel(veloPairsCell)
                 pairCell = split(veloPairsCell(index),',');
                 trajVeloStruct.(pairCell{1}) = str2double(pairCell{2});
             end 
             
-            basicParamStruct.topology = param_topology;
+            basicParamStruct.topology = basic_topology;
 
-            ctrlParamStruct.Kp = param_Kp;
-            ctrlParamStruct.Kv = param_Kv;
+            ctrlParamStruct.Kp = basic_Kp;
+            ctrlParamStruct.Kv = basic_Kv;
 
-            physicalStruct.veloLimit = param_veloLimit;
-            physicalStruct.controlLimit = param_controlLimit;
-            physicalStruct.c0 = param_c0;
-            physicalStruct.c1 = param_c1;
-            physicalStruct.c2 = param_c2;
+            physicalStruct.veloLimit = basic_veloLimit;
+            physicalStruct.ctrlLimit = basic_ctrlLimit;
+            physicalStruct.c0 = basic_c0;
+            physicalStruct.c1 = basic_c1;
+            physicalStruct.c2 = basic_c2;
 
-            
+
             basicParamStruct.simulBasis = simulBasisStruct;
             basicParamStruct.trainParam = trainParamStruct;
             leaderTrajStruct.trajPosi = trajPosiStruct;
@@ -1754,6 +1955,42 @@ classdef MainWindow < matlab.apps.AppBase
             basicParamStruct.ctrlParam = ctrlParamStruct;
             basicParamStruct.physical = physicalStruct;
             paramsStruct.basicParam = basicParamStruct;
+
+            if strcmp(advan_switch,'On')
+                advanParamStruct.enable = true;
+            else
+                advanParamStruct.enable = false;
+            end   
+                
+            if strcmp(advan_delaySwitch,'On')
+                delayParamStruct.enable = true;
+            else
+                delayParamStruct.enable = false;
+            end        
+            delayParamStruct.delayMode = advan_delayMode;
+            delayParamStruct.fixDelay =  advan_fixDelay;
+            delayParamStruct.flucDelay = advan_flucDelay;
+
+            if strcmp(advan_noiseSwitch,'On')
+                noiseParamStruct.enable = true;
+            else
+                noiseParamStruct.enable = false;
+            end        
+            noiseParamStruct.noiseMode = advan_noiseMode;
+            noiseParamStruct.frictionNoise = advan_frictionNoise;
+            noiseParamStruct.elecNoise = advan_elecNoise;
+            noiseParamStruct.alpha = advan_alpha;
+
+            if strcmp(advan_energySwitch,'On')
+                energyParamStruct.enable = true;
+            else
+                energyParamStruct.enable = false;
+            end       
+            
+            advanParamStruct.delayParam = delayParamStruct;
+            advanParamStruct.noiseParam = noiseParamStruct;
+            advanParamStruct.energyParam = energyParamStruct;
+            paramsStruct.advanParam = advanParamStruct;
 
             app.m_jsonHelper.saveParamsStruct(paramsName,paramsStruct);
         end
@@ -1880,16 +2117,6 @@ classdef MainWindow < matlab.apps.AppBase
                 app.energyRealtimeLabel.Enable = "off";
                 app.energyRealtimeTextArea.Enable = "off";
             end
-        end
-
-        function advanParamSaveBtnPushed(app,event)
-            app.isParamSaved = true;
-            app.uiFigure.Name = '多列车协同控制系统仿真平台';
-
-
-
-
-            
         end
 
         function startBtnPushed(app, event)
@@ -2031,33 +2258,117 @@ classdef MainWindow < matlab.apps.AppBase
                     % 直接画最后的结果
                     drawResult(app);
 
-                    % 设置状态
-                    setStatus(app,'准备就绪');
-                    
                 case 'research'    
                     switch app.m_currentStatus
                         case '准备就绪'
                             % 设置状态
                             setStatus(app,'正在运行');
+
+                            % 计算结果
+                            calculateResult(app);
+
                         case '回放中'     
                             stop(app.m_stepTimer);
                             app.m_stepNumGone = 0;
                             
-                            % 设置状态
-                            setStatus(app,'准备就绪');
-                        otherwise
-                            
                     end
+
+                    % 获取仿真参数
+                    position = app.m_lastResult{1};
+                    velocity = app.m_lastResult{2};
+                    spacingError = app.m_lastResult{3};
+                    controlInput = app.m_lastResult{4};
+                    timeVector = app.m_lastResult{5};
+                    energy = app.m_lastResult{7};
+                    totalTime = timeVector(end);
+                    [trainNum, stepNum] = size(position);
+
+                    % 准备可视化
+                    cla(app.positionAxes);
+                    cla(app.velocityAxes);
+                    cla(app.errorAxes);
+                    cla(app.controlInputAxes);
+
+                    legend(app.positionAxes,'off');
+                    legend(app.velocityAxes,'off');
+                    legend(app.errorAxes,'off');
+                    legend(app.controlInputAxes,'off');
+
+                    xlim(app.positionAxes, [0 totalTime]);
+                    xlim(app.velocityAxes, [0 totalTime]);
+                    xlim(app.errorAxes, [0 totalTime]);
+                    xlim(app.controlInputAxes, [0 totalTime]);
+
+                    hold(app.positionAxes,"on");
+                    hold(app.velocityAxes,"on");
+                    hold(app.errorAxes,"on");
+                    hold(app.controlInputAxes,"on");
+
+                    app.m_positionLines = gobjects(trainNum, 1);
+                    app.m_velocityLines = gobjects(trainNum, 1);
+                    app.m_errorLines = gobjects(trainNum, 1);
+                    app.m_controlInputLines = gobjects(trainNum, 1);
+
+                    colors = lines(trainNum);
+                    for trainIndex = 1:trainNum
+                        app.m_positionLines(trainIndex) = plot(app.positionAxes, NaN, NaN, 'Color',colors(trainIndex,:),'LineWidth',1.5);
+                        app.m_velocityLines(trainIndex) = plot(app.velocityAxes, NaN, NaN, 'Color',colors(trainIndex,:),'LineWidth',1.5);
+                        if trainIndex > 1
+                            app.m_errorLines(trainIndex) = plot(app.errorAxes, NaN, NaN, 'Color',colors(trainIndex,:),'LineWidth',1.5);
+                            app.m_controlInputLines(trainIndex) = plot(app.controlInputAxes, NaN, NaN, 'Color',colors(trainIndex,:),'LineWidth',1.5);
+                        end    
+                    end
+
+                    hold(app.positionAxes,"off");
+                    hold(app.velocityAxes,"off");
+                    hold(app.errorAxes,"off");
+                    hold(app.controlInputAxes,"off");
+
+                    for trainIndex = 1:trainNum
+                        app.m_positionLines(trainIndex).XData = timeVector;
+                        app.m_positionLines(trainIndex).YData = position(trainIndex,1:stepNum); 
+                        
+                        app.m_velocityLines(trainIndex).XData = timeVector;
+                        app.m_velocityLines(trainIndex).YData = velocity(trainIndex,1:stepNum);
+                        
+                        if trainIndex > 1
+                            app.m_errorLines(trainIndex).XData = timeVector;
+                            app.m_errorLines(trainIndex).YData = spacingError(trainIndex,1:stepNum);
+                        
+                            app.m_controlInputLines(trainIndex).XData = timeVector;
+                            app.m_controlInputLines(trainIndex).YData = controlInput(trainIndex,1:stepNum);
+                        end    
+                    end
+
+                    legend(app.positionAxes,["Leader", "Follower " + string(2:trainNum)],'Location','best');
+                    legend(app.velocityAxes,["Leader", "Follower " + string(2:trainNum)],'Location','best');
+                    legend(app.errorAxes,["Follower " + string(2:trainNum)],'Location','best');
+                    legend(app.controlInputAxes,["Follower " + string(2:trainNum)],'Location','best');
+
+                    % 显示总能耗
+                    if ~all(energy == 0)
+                        energyText = sprintf("能耗计算结果 (Energy Consumption)\n\n------------------------------------------------------------\n");
+                        energy_sum = 0;
+                        for trainIdx = 2:trainNum
+                            energy_sum = energy_sum + energy(trainIdx, stepNum);
+                            energyText = energyText + sprintf("跟随车 %d 总能耗: \t%.2f\t(m²/s³)\n", trainIdx, energy(trainIdx, stepNum));
+                        end
+                        energyText = energyText + sprintf("所有跟随车总能耗: \t%.2f\t(m²/s³)\n------------------------------------------------------------\n", energy_sum);
+                        app.energyRealtimeTextArea.Value = energyText;
+                    end
+
+
                 otherwise
                     
             end
+
+            % 设置状态
+            setStatus(app,'准备就绪');
 
             % 切换界面
             if ~strcmp(app.m_currentPanel, '可视化')
                 setPanel(app,'可视化');
             end 
-
-            
 
         end
 
@@ -2117,7 +2428,6 @@ classdef MainWindow < matlab.apps.AppBase
             % 设置状态
             setStatus(app,'回放中');            
         end
-        %--------------------------------------------------------------------
 
         function stepStartFunc(app)
 
@@ -2133,6 +2443,7 @@ classdef MainWindow < matlab.apps.AppBase
             controlInput = app.m_lastResult{4};
             timeVector = app.m_lastResult{5};
             trainLength = app.m_lastResult{6};
+            realtimeEnergy = app.m_lastResult{8};
             [trainNum, ~] = size(position);
             
             for trainIndex = 1:trainNum
@@ -2156,6 +2467,13 @@ classdef MainWindow < matlab.apps.AppBase
 
             drawnow limitrate;
 
+            % 显示实时能耗
+            if (app.m_currentScenario == "research") & (app.advanParamSwitch.Value == 'On') & (app.energyParamSwitch.Value == 'On')
+                energyText = sprintf("实时能耗 (Realtime Energy)\n\n------------------------------------------------------------\n");
+                energyText = energyText + sprintf("%s------------------------------------------------------------\n",realtimeEnergy(currentStep));
+                app.energyRealtimeTextArea.Value = energyText;
+            end    
+
         end
         
         function stepStopFunc(app)
@@ -2170,6 +2488,7 @@ classdef MainWindow < matlab.apps.AppBase
             % 走到最后一步   
             timeVector = app.m_lastResult{5};
             stepNum = length(timeVector);
+            energy = app.m_lastResult{7};
             if app.m_stepNumGone == stepNum
                 % 清除步数
                 app.m_stepNumGone = 0;
@@ -2184,8 +2503,24 @@ classdef MainWindow < matlab.apps.AppBase
 
                 % 设置状态
                 setStatus(app,'准备就绪');
-            end    
-            
+
+                % 自动结束时显示最终能耗
+                if (app.m_currentScenario == "research") & (app.advanParamSwitch.Value == 'On') & (app.energyParamSwitch.Value == 'On')
+                    % 显示总能耗
+                    if ~all(energy == 0)
+                        energyText = sprintf("能耗计算结果 (Energy Consumption)\n\n------------------------------------------------------------\n");
+                        energy_sum = 0;
+                        for trainIdx = 2:trainNum
+                            energy_sum = energy_sum + energy(trainIdx, stepNum);
+                            energyText = energyText + sprintf("跟随车 %d 总能耗: \t%.2f\t(m²/s³)\n", trainIdx, energy(trainIdx, stepNum));
+                        end
+                        energyText = energyText + sprintf("所有跟随车总能耗: \t%.2f\t(m²/s³)\n------------------------------------------------------------\n", energy_sum);
+                        app.energyRealtimeTextArea.Value = energyText;
+                    end
+                end    
+
+            end  
+               
         end
 
     end
