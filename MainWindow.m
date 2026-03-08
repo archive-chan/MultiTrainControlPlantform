@@ -37,19 +37,18 @@ classdef MainWindow < matlab.apps.AppBase
         statusLabel                 matlab.ui.control.Label
         statusLamp                  matlab.ui.control.Lamp
 
-        %% mainLayout
+        %% mainPanel
+        mainPanel                   matlab.ui.container.Panel
         mainLayout                  matlab.ui.container.GridLayout
 
-        %% selectPanel
-        selectPanel                 matlab.ui.container.Panel
+        %% selectLayout
         selectLayout                matlab.ui.container.GridLayout
         currentParamsLabel          matlab.ui.control.Label
         currentParamsDropDown       matlab.ui.control.DropDown
         recordsLabel                matlab.ui.control.Label
         recordsDropDown             matlab.ui.control.DropDown
 
-        %% basicParamPanel
-        basicParamPanel             matlab.ui.container.Panel
+        %% basicParamLayout
         basicParamLayout            matlab.ui.container.GridLayout
 
         % simulBasis
@@ -114,8 +113,7 @@ classdef MainWindow < matlab.apps.AppBase
 
         basicParamSaveButton        matlab.ui.control.Button
 
-        %% advanPanel
-        advanParamPanel             matlab.ui.container.Panel
+        %% advanLayout
         advanParamLayout            matlab.ui.container.GridLayout
 
         advanParamLabel             matlab.ui.control.Label
@@ -166,8 +164,7 @@ classdef MainWindow < matlab.apps.AppBase
 
         advanParamSaveButton        matlab.ui.control.Button
         
-        %% visualPanel
-        visualPanel                 matlab.ui.container.Panel
+        %% visualLayout
         visualLayout                matlab.ui.container.GridLayout
         animeAxes                   matlab.ui.control.UIAxes
         positionAxes                matlab.ui.control.UIAxes
@@ -175,14 +172,14 @@ classdef MainWindow < matlab.apps.AppBase
         errorAxes                   matlab.ui.control.UIAxes
         controlInputAxes            matlab.ui.control.UIAxes
 
-        %% historyPanel
-        historyPanel                matlab.ui.container.Panel
+        %% historyLayout
+        historyLayout               matlab.ui.container.GridLayout
+        historyTable                matlab.ui.control.Table
 
-        %% aboutPanel
-        aboutPanel                  matlab.ui.container.Panel
+        %% aboutLayout
+        aboutLayout                  matlab.ui.container.GridLayout
 
         %% 成员变量
-
         m_lastError
         m_dbCenter                  DBCenter
         m_jsonHelper                JsonHelper
@@ -298,7 +295,7 @@ classdef MainWindow < matlab.apps.AppBase
 
                 otherwise
                     % 显示所有侧边栏
-                    app.sideSimulLayout.RowHeight{2} = 'fit';d
+                    app.sideSimulLayout.RowHeight{2} = 'fit';
 
                     % 显示账号导入按钮
                     app.toolBarLayout.ColumnWidth{10} = 64;
@@ -380,12 +377,14 @@ classdef MainWindow < matlab.apps.AppBase
             app.paramsAddButton.Layout.Column = 7;
             app.paramsAddButton.Text = '新增参数集';
             app.paramsAddButton.FontSize = 11;
+            app.paramsAddButton.ButtonPushedFcn = createCallbackFcn(app,@paramsAddBtnPushed);
 
             app.paramsDeleteButton = uibutton(app.toolBarLayout, 'push');
             app.paramsDeleteButton.Layout.Row = 1;
             app.paramsDeleteButton.Layout.Column = 8;
             app.paramsDeleteButton.Text = '删除参数集';
             app.paramsDeleteButton.FontSize = 11;
+            app.paramsDeleteButton.ButtonPushedFcn = createCallbackFcn(app,@paramsDeleteBtnPushed);
 
             app.separator2Label = uilabel(app.toolBarLayout);
             app.separator2Label.HorizontalAlignment = 'center';
@@ -492,25 +491,23 @@ classdef MainWindow < matlab.apps.AppBase
             app.statusLamp.Layout.Column = 1;
             app.statusLamp.Color = [0.2314 0.6667 0.1961];
 
+            %% mainPanel
+            app.mainPanel = uipanel(app.uiLayout);
+            app.mainPanel.Layout.Row = 2;
+            app.mainPanel.Layout.Column = 2;
+            app.mainPanel.FontSize = 14;
 
-            %% mainLayout
-            app.mainLayout = uigridlayout(app.uiLayout);
+            app.mainLayout = uigridlayout(app.mainPanel);
             app.mainLayout.ColumnWidth = {'1x'};
             app.mainLayout.RowHeight = {'fit', '1x'};
-            app.mainLayout.Padding = [0 0 0 0];
-            app.mainLayout.Layout.Row = 2;
-            app.mainLayout.Layout.Column = 2;
 
-            % selectPanel
-            app.selectPanel = uipanel(app.mainLayout);
-            app.selectPanel.Title = '选择';
-            app.selectPanel.Layout.Row = 1;
-            app.selectPanel.Layout.Column = 1;
-            app.selectPanel.FontSize = 14;
-
-            app.selectLayout = uigridlayout(app.selectPanel);
+            % selectLayout
+            app.selectLayout = uigridlayout(app.mainLayout);
             app.selectLayout.ColumnWidth = {'fit', '1x', 'fit', '1x'};
             app.selectLayout.RowHeight = {'1x'};
+            app.selectLayout.Padding = [0 0 0 0];
+            app.selectLayout.Layout.Row = 1;
+            app.selectLayout.Layout.Column = 1;
 
             app.currentParamsLabel = uilabel(app.selectLayout);
             app.currentParamsLabel.Layout.Row = 1;
@@ -531,17 +528,13 @@ classdef MainWindow < matlab.apps.AppBase
             app.recordsDropDown.Layout.Row = 1;
             app.recordsDropDown.Layout.Column = 4;
 
-            %% basicParamPanel
-            app.basicParamPanel = uipanel(app.mainLayout);
-            app.basicParamPanel.Title = '基本参数设置';
-            app.basicParamPanel.Layout.Row = 2;
-            app.basicParamPanel.Layout.Column = 1;
-            app.basicParamPanel.FontSize = 14;
-            app.basicParamPanel.Visible = "off";
-
-            app.basicParamLayout = uigridlayout(app.basicParamPanel);
+            %% basicParamLayout
+            app.basicParamLayout = uigridlayout(app.mainLayout);
             app.basicParamLayout.ColumnWidth = {'1x', 100};
             app.basicParamLayout.RowHeight = {'1x', '1.5x', '1x', '1x', '1x', '1.5x', '0.5x', 'fit'};
+            app.basicParamLayout.Padding = [0 0 0 0];
+            app.basicParamLayout.Layout.Row = 2;
+            app.basicParamLayout.Layout.Column = 1;
 
             % simulBasis
             app.simulBasisPanel = uipanel(app.basicParamLayout);
@@ -845,17 +838,13 @@ classdef MainWindow < matlab.apps.AppBase
             app.basicParamSaveButton.Text = '保存';
             app.basicParamSaveButton.ButtonPushedFcn = createCallbackFcn(app,@paramSaveBtnPushed,true);
 
-            %% advanParamPanel
-            app.advanParamPanel = uipanel(app.mainLayout);
-            app.advanParamPanel.Title = '高级参数设置';
-            app.advanParamPanel.Layout.Row = 2;
-            app.advanParamPanel.Layout.Column = 1;
-            app.advanParamPanel.FontSize = 14;
-            app.advanParamPanel.Visible = "off";
-
-            app.advanParamLayout = uigridlayout(app.advanParamPanel);
+            %% advanParamLayout
+            app.advanParamLayout = uigridlayout(app.mainLayout);
             app.advanParamLayout.ColumnWidth = {'fit', 'fit', '1x', 100};
             app.advanParamLayout.RowHeight = {20, '1x', '1x', '1.5x', '0.5x', 'fit'};
+            app.advanParamLayout.Padding = [0 0 0 0];
+            app.advanParamLayout.Layout.Row = 2;
+            app.advanParamLayout.Layout.Column = 1;
 
             app.advanParamLabel = uilabel(app.advanParamLayout);
             app.advanParamLabel.HorizontalAlignment = 'center';
@@ -1066,19 +1055,15 @@ classdef MainWindow < matlab.apps.AppBase
             app.advanParamSaveButton.Text = '保存';
             app.advanParamSaveButton.ButtonPushedFcn = createCallbackFcn(app,@paramSaveBtnPushed,true);
 
-            %% visualPanel
-            app.visualPanel = uipanel(app.mainLayout);
-            app.visualPanel.Title = '仿真可视化';
-            app.visualPanel.Layout.Row = 2;
-            app.visualPanel.Layout.Column = 1;
-            app.visualPanel.FontSize = 14;
-            app.visualPanel.Visible = "off";
-
-            app.visualLayout = uigridlayout(app.visualPanel);
+            %% visualLayout
+            app.visualLayout = uigridlayout(app.mainLayout);
             app.visualLayout.RowHeight = {'1x', '1x', '1x'};
-            app.visualLayout.ColumnSpacing = 4;
+            app.visualLayout.ColumnWidth = {'1x','1x'};
             app.visualLayout.RowSpacing = 4;
+            app.visualLayout.ColumnSpacing = 4;
             app.visualLayout.Padding = [4 4 4 4];
+            app.visualLayout.Layout.Row = 2;
+            app.visualLayout.Layout.Column = 1;
 
             app.animeAxes = uiaxes(app.visualLayout);
             title(app.animeAxes, '列车运行动画')
@@ -1115,21 +1100,23 @@ classdef MainWindow < matlab.apps.AppBase
             app.controlInputAxes.Layout.Row = 3;
             app.controlInputAxes.Layout.Column = 2;
 
-            %% historyPanel
-            app.historyPanel = uipanel(app.mainLayout);
-            app.historyPanel.Title = '历史数据';
-            app.historyPanel.Layout.Row = 2;
-            app.historyPanel.Layout.Column = 1;
-            app.historyPanel.FontSize = 14;
-            app.historyPanel.Visible = "off";
+            %% historyLayout
+            app.historyLayout = uigridlayout(app.mainLayout);
+            app.historyLayout.ColumnWidth = {'1x'};
+            app.historyLayout.RowHeight = {'1x'};
+            app.historyLayout.Padding = [0 0 0 0];
+            app.historyLayout.Layout.Row = 2;
+            app.historyLayout.Layout.Column = 1;
 
-            %% aboutPanel
-            app.aboutPanel = uipanel(app.mainLayout);
-            app.aboutPanel.Title = '关于';
-            app.aboutPanel.Layout.Row = [1 2];
-            app.aboutPanel.Layout.Column = 1;
-            app.aboutPanel.FontSize = 14;
-            app.aboutPanel.Visible = "off";
+            app.historyTable = uitable(app.historyLayout);
+            app.historyTable.ColumnName = {'Column 1'; 'Column 2'; 'Column 3'; 'Column 4'};
+            app.historyTable.RowName = {};
+            app.historyTable.Layout.Row = 1;
+            app.historyTable.Layout.Column = 1;
+
+            %% aboutLayout
+            app.aboutLayout = uigridlayout(app.mainPanel);
+
         end
 
         function setPanel(app, panelname)
@@ -1138,19 +1125,23 @@ classdef MainWindow < matlab.apps.AppBase
                 return;
             end
 
-            % 隐藏 mainLayout
+            % 隐藏 mainPanel
             app.mainLayout.Visible = "off";
-            app.selectPanel.Visible = "off";
-            app.basicParamPanel.Visible = "off";
-            app.advanParamPanel.Visible = "off";
-            app.visualPanel.Visible = "off";
-            app.historyPanel.Visible = "off";
-            app.aboutPanel.Visible = "off";
-            % 隐藏 selectPanel
+            app.aboutLayout.Visible = "off";
+
+            % 隐藏 mainLayout
+            app.selectLayout.Visible = "off";
+            app.basicParamLayout.Visible = "off";
+            app.advanParamLayout.Visible = "off";
+            app.visualLayout.Visible = "off";
+            app.historyLayout.Visible = "off";
+ 
+            % 隐藏 selectLayout
             app.selectLayout.ColumnWidth{1}=0;
             app.selectLayout.ColumnWidth{2}=0;
             app.selectLayout.ColumnWidth{3}=0;
             app.selectLayout.ColumnWidth{4}=0;
+
             % 禁用后四个 toolbar 按钮
             app.paramsAddButton.Enable = "off";
             app.paramsDeleteButton.Enable = "off";
@@ -1159,50 +1150,59 @@ classdef MainWindow < matlab.apps.AppBase
 
             switch panelname
                 case '基本参数'
-                    app.selectLayout.ColumnWidth{1}='fit';
-                    app.selectLayout.ColumnWidth{2}='1x';
-
                     app.paramsAddButton.Enable = "on";
                     app.paramsDeleteButton.Enable = "on";
 
-                    app.selectPanel.Visible = "on";
-                    app.basicParamPanel.Visible = "on"; 
+                    app.selectLayout.ColumnWidth{1}='fit';
+                    app.selectLayout.ColumnWidth{2}='1x';
+                    app.selectLayout.Visible = "on";
+
+                    app.basicParamLayout.Visible = "on";
+
+                    app.mainLayout.Visible = "on";
 
                 case '高级参数'   
-                    app.selectLayout.ColumnWidth{1}='fit';
-                    app.selectLayout.ColumnWidth{2}='1x';
-
                     app.paramsAddButton.Enable = "on";
                     app.paramsDeleteButton.Enable = "on";
 
-                    app.selectPanel.Visible = "on";
-                    app.advanParamPanel.Visible = "on";
+                    app.selectLayout.ColumnWidth{1}='fit';
+                    app.selectLayout.ColumnWidth{2}='1x';
+                    app.selectLayout.Visible = "on";
+
+                    app.advanParamLayout.Visible = "on";
+
+                    app.mainLayout.Visible = "on";
 
                 case '可视化'
                     app.selectLayout.ColumnWidth{1}='fit';
                     app.selectLayout.ColumnWidth{2}='1x';
+                    app.selectLayout.Visible = "on";
 
-                    app.selectPanel.Visible = "on";
-                    app.visualPanel.Visible = "on";
+                    app.visualLayout.Visible = "on";
+
+                    app.mainLayout.Visible = "on";
 
                 case '历史数据'
-                    app.selectLayout.ColumnWidth{3}='fit';
-                    app.selectLayout.ColumnWidth{4}='1x';
-
                     app.dataExportButton.Enable = "on";
 
-                    app.selectPanel.Visible = "on";
-                    app.historyPanel.Visible = "on";
+                    app.selectLayout.ColumnWidth{3}='fit';
+                    app.selectLayout.ColumnWidth{4}='1x';
+                    app.selectLayout.Visible = "on";
+
+                    app.historyLayout.Visible = "on";
+
+                    app.mainLayout.Visible = "on";
                     
                 case '关于'
-                    app.aboutPanel.Visible = "on";
-                    app.accountImportButton.Enable = "on";       
+                    app.accountImportButton.Enable = "on"; 
+                    
+                    app.aboutLayout.Visible = "on";
                 otherwise
 
             end
 
-            app.m_currentPanel = panelname;
-            app.mainLayout.Visible = "on";      
+            app.mainPanel.Title = panelname;
+            app.m_currentPanel = panelname;   
         end
 
         function setStatus(app, status)
@@ -2385,7 +2385,7 @@ classdef MainWindow < matlab.apps.AppBase
             end  
 
             % 获取回放速度
-            answer = inputdlg('请输入回放速度倍数 (1=正常速度, 2=2倍速, 0.5=0.5倍速):','回放设置', 1, {'1'});
+            answer = inputdlg('请输入回放速度倍数 (1=正常速度, 2=2倍速, 0.5=0.5倍速)','回放设置', 1, {'1'});
             if isempty(answer)
                 % 取消
                 return;
@@ -2428,6 +2428,70 @@ classdef MainWindow < matlab.apps.AppBase
             % 设置状态
             setStatus(app,'回放中');            
         end
+
+        function paramsAddBtnPushed(app,event)
+            if ~app.isParamSaved
+                uialert(app.uiFigure,'参数未保存，请先保存参数!','错误');
+                return;
+            end
+
+            answer = inputdlg('为新参数集命名', '新建参数集',[1 45], {'NewParams'});
+            if isempty(answer)
+                % 取消
+                return;
+            end
+
+            paramsName = answer{1};
+            % 检查是否重复
+            if ismember(paramsName, app.m_jsonHelper.m_paramsNameList)
+                % 已有同名参数集
+                uialert(app.uiFigure, '参数集名称重复，请重新输入！', '错误', 'Icon', 'warning');
+                return;
+            end    
+
+            % 新建参数集
+            app.m_jsonHelper.writeDefaultParams(paramsName);
+
+            % 选择并显示新建的参数集
+            app.currentParamsDropDown.Items = [app.currentParamsDropDown.Items, {paramsName}];
+            app.currentParamsDropDown.Value = paramsName;
+            currentParamsValueChanged(app);
+
+            % 成功
+            uialert(app.uiFigure,'新建成功!','新建参数集','Icon','success')
+        end
+        
+        function paramsDeleteBtnPushed(app, event)
+            if ~app.isParamSaved
+                uialert(app.uiFigure,'参数未保存，请先保存参数!','错误');
+                return;
+            end
+
+            paramsName = app.currentParamsDropDown.Value;
+            if strcmp(paramsName, 'default')
+                uialert(app.uiFigure,'不支持删除默认参数集!','删除参数集');
+                return;
+            end    
+            choice = uiconfirm(app.uiFigure,sprintf('确定要删除当前参数集 %s 吗?',paramsName),'删除参数集',"Options",["确定删除","我再想想"],"DefaultOption",2,"CancelOption",2);
+            if strcmp(choice, '我再想想')
+                return;
+            end
+
+            % 确定删除本地参数集
+            app.m_jsonHelper.deleteParams(paramsName);
+
+            % 更新 dropdown
+            idxToRemove = find(strcmp(app.currentParamsDropDown.Items, paramsName));
+            if ~isempty(idxToRemove)
+                app.currentParamsDropDown.Items(idxToRemove) = [];
+            end  
+            app.currentParamsDropDown.Value = 'default';
+            currentParamsValueChanged(app);
+
+
+            % 成功
+            uialert(app.uiFigure,'删除成功!','删除参数集','Icon','success')
+        end    
 
         function stepStartFunc(app)
 
@@ -2522,7 +2586,6 @@ classdef MainWindow < matlab.apps.AppBase
             end  
                
         end
-
+    
     end
-
 end
