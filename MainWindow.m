@@ -45,8 +45,8 @@ classdef MainWindow < matlab.apps.AppBase
         selectLayout                matlab.ui.container.GridLayout
         currentParamsLabel          matlab.ui.control.Label
         currentParamsDropDown       matlab.ui.control.DropDown
-        recordsLabel                matlab.ui.control.Label
-        recordsDropDown             matlab.ui.control.DropDown
+        historyLabel                matlab.ui.control.Label
+        historyDropDown             matlab.ui.control.DropDown
 
         %% basicParamLayout
         basicParamLayout            matlab.ui.container.GridLayout
@@ -184,9 +184,11 @@ classdef MainWindow < matlab.apps.AppBase
         m_dbCenter                  DBCenter
         m_jsonHelper                JsonHelper
 
+        m_currentUsername
         m_currentScenario
         m_currentPanel
         m_currentStatus
+        m_historyList
 
         m_lastResult
 
@@ -216,9 +218,11 @@ classdef MainWindow < matlab.apps.AppBase
             app.m_dbCenter = DBCenter('./db/local.db');
             app.m_jsonHelper = JsonHelper('./params');
 
+            app.m_currentUsername = '';
             app.m_currentScenario = '';
             app.m_currentPanel = '';
             app.m_currentStatus = '';
+            app.m_historyList = {};
 
             app.m_lastResult = {};
             
@@ -230,7 +234,6 @@ classdef MainWindow < matlab.apps.AppBase
 
             app.m_stepTimer = timer('Name','steptimer');
             app.m_stepTimer.ExecutionMode = 'fixedRate';
-            app.m_stepTimer.StartFcn = @(~,~)stepStartFunc(app);
             app.m_stepTimer.TimerFcn = @(~,~)stepTimerFunc(app);
             app.m_stepTimer.StopFcn = @(~,~)stepStopFunc(app);
             app.m_stepNumGone = 0;
@@ -247,6 +250,7 @@ classdef MainWindow < matlab.apps.AppBase
 
         function showUi(app, username)
             % 1.获取账号场景 根据场景准备 UI
+            app.m_currentUsername = username;
             rf = rowfilter("username");
             rf = (rf.username == username);
             resultTable = app.m_dbCenter.selectFieldCondition('account',{'username','scenario'},rf);
@@ -375,14 +379,14 @@ classdef MainWindow < matlab.apps.AppBase
             app.paramsAddButton = uibutton(app.toolBarLayout, 'push');
             app.paramsAddButton.Layout.Row = 1;
             app.paramsAddButton.Layout.Column = 7;
-            app.paramsAddButton.Text = '新增参数集';
+            app.paramsAddButton.Text = '新增参数配置';
             app.paramsAddButton.FontSize = 11;
             app.paramsAddButton.ButtonPushedFcn = createCallbackFcn(app,@paramsAddBtnPushed);
 
             app.paramsDeleteButton = uibutton(app.toolBarLayout, 'push');
             app.paramsDeleteButton.Layout.Row = 1;
             app.paramsDeleteButton.Layout.Column = 8;
-            app.paramsDeleteButton.Text = '删除参数集';
+            app.paramsDeleteButton.Text = '删除参数配置';
             app.paramsDeleteButton.FontSize = 11;
             app.paramsDeleteButton.ButtonPushedFcn = createCallbackFcn(app,@paramsDeleteBtnPushed);
 
@@ -445,7 +449,7 @@ classdef MainWindow < matlab.apps.AppBase
             app.historyDataButton.Layout.Row = 4;
             app.historyDataButton.Layout.Column = 1;
             app.historyDataButton.Text = '历史数据';
-            app.historyDataButton.ButtonPushedFcn = createCallbackFcn(app,@(src,event)setPanel(app,'历史数据'),true);
+            app.historyDataButton.ButtonPushedFcn = createCallbackFcn(app,@(src,event)setPanel(app,'历史数据'));
 
             % sideSystemPanel
             app.sideSystemPanel = uipanel(app.sideBarLayout);
@@ -468,7 +472,7 @@ classdef MainWindow < matlab.apps.AppBase
             app.aboutButton.Layout.Row = 2;
             app.aboutButton.Layout.Column = 1;
             app.aboutButton.Text = '关于';
-            app.aboutButton.ButtonPushedFcn = createCallbackFcn(app,@(src,event)setPanel(app,'关于'),true);
+            app.aboutButton.ButtonPushedFcn = createCallbackFcn(app,@(src,event)setPanel(app,'关于'));
 
             % sideStatusPanel
             app.sideStatusPanel = uipanel(app.sideBarLayout);
@@ -512,21 +516,22 @@ classdef MainWindow < matlab.apps.AppBase
             app.currentParamsLabel = uilabel(app.selectLayout);
             app.currentParamsLabel.Layout.Row = 1;
             app.currentParamsLabel.Layout.Column = 1;
-            app.currentParamsLabel.Text = '当前参数集';
+            app.currentParamsLabel.Text = '当前参数配置';
 
             app.currentParamsDropDown = uidropdown(app.selectLayout);
             app.currentParamsDropDown.Layout.Row = 1;
             app.currentParamsDropDown.Layout.Column = 2;
             app.currentParamsDropDown.ValueChangedFcn = createCallbackFcn(app,@currentParamsValueChanged,true);
 
-            app.recordsLabel = uilabel(app.selectLayout);
-            app.recordsLabel.Layout.Row = 1;
-            app.recordsLabel.Layout.Column = 3;
-            app.recordsLabel.Text = '仿真记录';
+            app.historyLabel = uilabel(app.selectLayout);
+            app.historyLabel.Layout.Row = 1;
+            app.historyLabel.Layout.Column = 3;
+            app.historyLabel.Text = '仿真记录';
 
-            app.recordsDropDown = uidropdown(app.selectLayout);
-            app.recordsDropDown.Layout.Row = 1;
-            app.recordsDropDown.Layout.Column = 4;
+            app.historyDropDown = uidropdown(app.selectLayout);
+            app.historyDropDown.Layout.Row = 1;
+            app.historyDropDown.Layout.Column = 4;
+            app.historyDropDown.ValueChangedFcn = createCallbackFcn(app,@historyValueChanged,true);
 
             %% basicParamLayout
             app.basicParamLayout = uigridlayout(app.mainLayout);
@@ -1285,12 +1290,15 @@ classdef MainWindow < matlab.apps.AppBase
             app.m_controlInputLines = [];
             app.m_stepNumGone = 0;
 
+            app.isParamSaved = true;
 
             % 基本参数 高级参数
-            app.currentParamsDropDown.Items = app.m_jsonHelper.m_paramsNameList; % 读取本地所有参数集名
+            app.currentParamsDropDown.Items = app.m_jsonHelper.m_paramsNameList; % 读取本地所有参数配置名
             app.currentParamsDropDown.Value = 'default';
             currentParamsValueChanged(app); % 手动调用
             app.energyRealtimeTextArea.Value = '';
+
+            updateHistoryList(app);
 
             % 可视化
             cla(app.animeAxes);
@@ -2128,6 +2136,14 @@ classdef MainWindow < matlab.apps.AppBase
             % 计算各个变量的结果
             calculateResult(app);
 
+            writeResult(app);
+
+            updateHistoryList(app);
+            app.historyDropDown.Items = app.m_historyList;
+            app.historyDropDown.Value = app.historyDropDown.Items{end};
+            historyValueChanged(app);
+
+
             % 准备好计时器的预设参数
             timeVector = app.m_lastResult{5};
             position = app.m_lastResult{1};
@@ -2435,7 +2451,7 @@ classdef MainWindow < matlab.apps.AppBase
                 return;
             end
 
-            answer = inputdlg('为新参数集命名', '新建参数集',[1 45], {'NewParams'});
+            answer = inputdlg('为新参数配置命名', '新建参数配置',[1 45], {'NewParams'});
             if isempty(answer)
                 % 取消
                 return;
@@ -2444,21 +2460,21 @@ classdef MainWindow < matlab.apps.AppBase
             paramsName = answer{1};
             % 检查是否重复
             if ismember(paramsName, app.m_jsonHelper.m_paramsNameList)
-                % 已有同名参数集
-                uialert(app.uiFigure, '参数集名称重复，请重新输入！', '错误', 'Icon', 'warning');
+                % 已有同名参数配置
+                uialert(app.uiFigure, '参数配置名称重复，请重新输入！', '错误', 'Icon', 'warning');
                 return;
             end    
 
-            % 新建参数集
+            % 新建参数配置
             app.m_jsonHelper.writeDefaultParams(paramsName);
 
-            % 选择并显示新建的参数集
+            % 选择并显示新建的参数配置
             app.currentParamsDropDown.Items = [app.currentParamsDropDown.Items, {paramsName}];
             app.currentParamsDropDown.Value = paramsName;
             currentParamsValueChanged(app);
 
             % 成功
-            uialert(app.uiFigure,'新建成功!','新建参数集','Icon','success')
+            uialert(app.uiFigure,'新建成功!','新建参数配置','Icon','success')
         end
         
         function paramsDeleteBtnPushed(app, event)
@@ -2469,15 +2485,15 @@ classdef MainWindow < matlab.apps.AppBase
 
             paramsName = app.currentParamsDropDown.Value;
             if strcmp(paramsName, 'default')
-                uialert(app.uiFigure,'不支持删除默认参数集!','删除参数集');
+                uialert(app.uiFigure,'不支持删除默认参数配置!','删除参数配置');
                 return;
             end    
-            choice = uiconfirm(app.uiFigure,sprintf('确定要删除当前参数集 %s 吗?',paramsName),'删除参数集',"Options",["确定删除","我再想想"],"DefaultOption",2,"CancelOption",2);
+            choice = uiconfirm(app.uiFigure,sprintf('确定要删除当前参数配置 %s 吗?',paramsName),'删除参数配置',"Options",["确定删除","我再想想"],"DefaultOption",2,"CancelOption",2);
             if strcmp(choice, '我再想想')
                 return;
             end
 
-            % 确定删除本地参数集
+            % 确定删除本地参数配置
             app.m_jsonHelper.deleteParams(paramsName);
 
             % 更新 dropdown
@@ -2490,12 +2506,8 @@ classdef MainWindow < matlab.apps.AppBase
 
 
             % 成功
-            uialert(app.uiFigure,'删除成功!','删除参数集','Icon','success')
+            uialert(app.uiFigure,'删除成功!','删除参数配置','Icon','success')
         end    
-
-        function stepStartFunc(app)
-
-        end
 
         function stepTimerFunc(app)
             % 渲染画面
@@ -2587,5 +2599,99 @@ classdef MainWindow < matlab.apps.AppBase
                
         end
     
+        function writeResult(app)
+            % 获取时间
+            currentTime = datetime('now', 'Format', 'yyMMdd_HHmmss');
+            % 获取表格名
+            tableName = sprintf("%s_%s",app.m_currentUsername, string(currentTime));
+
+            % 获取列车数
+            position = app.m_lastResult{1};
+            velocity = app.m_lastResult{2};
+            spacingError = app.m_lastResult{3};
+            controlInput = app.m_lastResult{4};
+            [trainNum, ~] = size(position);
+            % 获取字段名
+            field = "时间_s REAL PRIMARY KEY ASC,";
+            fieldNames = {'时间_s'};
+            timeVector = app.m_lastResult{5};
+            fieldValues = {timeVector};
+
+            for trainIndex = 1:trainNum
+                fieldname = sprintf('列车%d位置_m', trainIndex);
+                fieldNames{(length(fieldNames))+1} = fieldname;
+
+                field = field + sprintf("%s REAL,", fieldname);
+
+                fieldValues{(length(fieldValues))+1} = position(trainIndex,:);
+            end
+            for trainIndex = 1:trainNum
+                fieldname = sprintf('列车%d速度_ms', trainIndex);
+                fieldNames{(length(fieldNames))+1} = fieldname;
+
+                field = field + sprintf("%s REAL,", fieldname);
+
+                fieldValues{(length(fieldValues))+1} = velocity(trainIndex,:);
+            end
+            for trainIndex = 2:trainNum
+                fieldname = sprintf('列车%d间距误差_m', trainIndex);
+                fieldNames{(length(fieldNames))+1} = fieldname;
+
+                field = field + sprintf("%s REAL,", fieldname);
+
+                fieldValues{(length(fieldValues))+1} = spacingError(trainIndex,:);
+            end
+            for trainIndex = 2:trainNum
+                fieldname = sprintf('列车%d控制输入_ms2', trainIndex);
+                fieldNames{(length(fieldNames))+1} = fieldname;
+
+                field = field + sprintf("%s REAL,", fieldname);
+
+                fieldValues{(length(fieldValues))+1} = controlInput(trainIndex,:);
+            end
+            % 删除最后的逗号
+            field = extractBefore(field, strlength(field));
+            % 创建仿真记录表格
+            success = app.m_dbCenter.createTable(tableName, field);
+            if ~success
+                app.m_lastError = app.m_dbcenter.m_lastError;
+                return; 
+            end    
+
+            % 批量插入数据
+            success = app.m_dbCenter.insertRecords(tableName, fieldNames, fieldValues);
+            if ~success
+                app.m_lastError = app.m_dbcenter.m_lastError;
+                return; 
+            end    
+
+
+        end    
+
+        function updateHistoryList(app)
+            app.m_historyList = {};
+
+            rf = rowfilter("type");
+            rf = (rf.type == "table");
+            resultTable = app.m_dbCenter.selectFieldCondition('sqlite_master', {'name', 'type'}, rf);
+            tablenames = resultTable.name;
+            name = sprintf("%s_", app.m_currentUsername);
+            for i = 1:numel(tablenames)
+                s = tablenames(i);          % 当前 string 标量
+                L = strlength(s);          % 字符串长度
+                if L >= 15
+                    c = char(s);           % 转为字符向量
+                    % 检查倒数第7位和倒数第14位是否为 '_'
+                    if c(end-6) == '_' && c(end-13) == '_' && contains(s, name)
+                        app.m_historyList{end+1} = char(s);  % 将符合条件的 string 存入元胞数组
+                    end
+                end
+            end
+        end
+
+        function historyValueChanged(app, event)
+            
+        end
+
     end
 end

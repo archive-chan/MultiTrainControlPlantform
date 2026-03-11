@@ -30,7 +30,7 @@ classdef LoginWindow < matlab.apps.AppBase
 
     methods (Access = public)
         function app = LoginWindow()
-            createComponents(app);
+            setupUi(app);
             showUi(app,'Login');
 
             app.m_lastError = '';
@@ -106,7 +106,7 @@ classdef LoginWindow < matlab.apps.AppBase
     end
     
     methods (Access = private)
-        function createComponents(app)
+        function setupUi(app)
             app.uiFigure = uifigure;
             app.uiFigure.Position = [540 320 400 300];
             app.uiFigure.Name = '欢迎登录多列车协同控制系统仿真平台';

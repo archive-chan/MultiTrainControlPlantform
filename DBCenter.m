@@ -89,7 +89,7 @@ classdef DBCenter < handle
             records = table();
 
             try 
-                records = sqlread(obj.m_conn, tableName, "RowFilter",conditionRowFilter);
+                records = sqlread(obj.m_conn, tableName, "RowFilter", conditionRowFilter);
                 
             catch msgException
                 obj.m_lastError = sprintf('表格 %s 条件全查询失败: %s', tableName, msgException.message);
@@ -147,12 +147,61 @@ classdef DBCenter < handle
             selectSql = sprintf('SELECT %s FROM %s', strjoin(fieldNames,','), tableName);
 
             try
-                records = fetch(obj.m_conn,selectSql,"RowFilter",conditionRowFilter);
+                records = fetch(obj.m_conn, selectSql, "RowFilter", conditionRowFilter);
             catch msgException
                 obj.m_lastError = sprintf('表格 %s 条件字段查询失败: %s', tableName, msgException.message);
                 error(obj.m_lastError);
             end   
 
         end    
+    
+        function isSuccess = insertRecords(obj, tableName, fieldNames, fieldValues)
+            % insert into tableName (username,password,scenario) values('nihao', 22, 425)
+            isSuccess = false;
+            obj.m_lastError = '';
+
+            namesStr = strjoin(fieldNames,', ');
+
+            recordNum = length(fieldValues{1});
+            for rIndex = 1:recordNum
+                % 构建sql语句
+                formattedElements = {};
+                for fIndex = 1:length(fieldNames)
+                    v = fieldValues{fIndex}(rIndex);
+                    if isnumeric(v)
+                        % 数字类型转换为字符串
+                        formattedElements{fIndex} = num2str(v);
+                    elseif ischar(v) || isstring(v)
+                        % 字符串类型添加单引号
+                        formattedElements{fIndex} = ['''', v, ''''];
+                    elseif islogical(v)
+                        % 布尔类型转换为字符串
+                        formattedElements{fIndex} = lower(string(v));
+                    elseif isempty(v)
+                        % 空值转换为NULL
+                        formattedElements{fIndex} = 'NULL';
+                    else
+                        % 其他类型转换为字符串
+                        formattedElements{fIndex} = string(v);
+                    end
+
+                end
+                valuesStr = strjoin(formattedElements, ', ');
+                insertSql = sprintf('INSERT INTO %s ( %s ) VALUES ( %s )', tableName, namesStr, valuesStr);
+
+                try
+                    execute(obj.m_conn, insertSql);
+                    isSuccess = true;
+
+                catch msgException
+                    % 执行过程中有报错
+                    obj.m_lastError = sprintf('表格 %s 批量插入记录失败: %s', tableName, msgException.message);
+                    error(obj.m_lastError);
+                end  
+                
+            end
+
+        end    
+    
     end
 end
