@@ -14,8 +14,9 @@ classdef MainWindow < matlab.apps.AppBase
         paramsAddButton             matlab.ui.control.Button
         paramsDeleteButton          matlab.ui.control.Button
         separator2Label             matlab.ui.control.Label
+        recordDeleteButton          matlab.ui.control.Button
+        recordExportButton          matlab.ui.control.Button
         accountImportButton         matlab.ui.control.Button
-        dataExportButton            matlab.ui.control.Button
 
         %% sideBar
         sideBarLayout               matlab.ui.container.GridLayout
@@ -25,7 +26,7 @@ classdef MainWindow < matlab.apps.AppBase
         basicParamButton            matlab.ui.control.Button
         advanParamButton            matlab.ui.control.Button
         simulVisualButton           matlab.ui.control.Button
-        historyDataButton           matlab.ui.control.Button
+        historyRecordButton           matlab.ui.control.Button
 
         sideSystemPanel             matlab.ui.container.Panel
         sideSystemLayout            matlab.ui.container.GridLayout
@@ -45,8 +46,8 @@ classdef MainWindow < matlab.apps.AppBase
         selectLayout                matlab.ui.container.GridLayout
         currentParamsLabel          matlab.ui.control.Label
         currentParamsDropDown       matlab.ui.control.DropDown
-        historyLabel                matlab.ui.control.Label
-        historyDropDown             matlab.ui.control.DropDown
+        historyRecordLabel                matlab.ui.control.Label
+        historyRecordDropDown             matlab.ui.control.DropDown
 
         %% basicParamLayout
         basicParamLayout            matlab.ui.container.GridLayout
@@ -172,9 +173,9 @@ classdef MainWindow < matlab.apps.AppBase
         errorAxes                   matlab.ui.control.UIAxes
         controlInputAxes            matlab.ui.control.UIAxes
 
-        %% historyLayout
-        historyLayout               matlab.ui.container.GridLayout
-        historyTable                matlab.ui.control.Table
+        %% historyRecordLayout
+        historyRecordLayout               matlab.ui.container.GridLayout
+        historyRecordTable                matlab.ui.control.Table
 
         %% aboutLayout
         aboutLayout                  matlab.ui.container.GridLayout
@@ -186,9 +187,9 @@ classdef MainWindow < matlab.apps.AppBase
 
         m_currentUsername
         m_currentScenario
-        m_currentPanel
+        m_currentPage
         m_currentStatus
-        m_historyList
+        m_historyRecordList
 
         m_lastResult
 
@@ -220,9 +221,9 @@ classdef MainWindow < matlab.apps.AppBase
 
             app.m_currentUsername = '';
             app.m_currentScenario = '';
-            app.m_currentPanel = '';
+            app.m_currentPage = '';
             app.m_currentStatus = '';
-            app.m_historyList = {};
+            app.m_historyRecordList = {};
 
             app.m_lastResult = {};
             
@@ -250,63 +251,81 @@ classdef MainWindow < matlab.apps.AppBase
 
         function showUi(app, username)
             % 1.获取账号场景 根据场景准备 UI
-            app.m_currentUsername = username;
             rf = rowfilter("username");
             rf = (rf.username == username);
             resultTable = app.m_dbCenter.selectFieldCondition('account',{'username','scenario'},rf);
+            app.m_currentUsername = username;
             app.m_currentScenario = resultTable.scenario;
 
-            % teaching 和 admin 场景的 toolbar 按钮排布
+            % 重新排布 toolbar 状态按钮
             app.startButton.Layout.Column = 1;
             app.pauseButton.Layout.Column = 2;
             app.continueButton.Layout.Column = 3;
             app.resultButton.Layout.Column = 4;
             app.replayButton.Layout.Column = 5;
-            % toolbar 按钮显示隐藏
-            app.toolBarLayout.ColumnWidth{1} = 64;
-            app.toolBarLayout.ColumnWidth{2} = 64;
-            app.toolBarLayout.ColumnWidth{3} = 64;
-            app.toolBarLayout.ColumnWidth{4} = 64;
-            app.toolBarLayout.ColumnWidth{5} = 64;
-            app.toolBarLayout.ColumnWidth{10} = 0;
-            % teaching 和 admin 场景的动画演示区显示
-            app.visualLayout.RowHeight{1} = '1x';
-            app.animeAxes.Visible = "on";
 
-            switch app.m_currentScenario;
+            % 隐藏 toolbar 按钮
+            app.toolBarLayout.ColumnWidth{1} = 0;
+            app.toolBarLayout.ColumnWidth{2} = 0;
+            app.toolBarLayout.ColumnWidth{3} = 0;
+            app.toolBarLayout.ColumnWidth{4} = 0;
+            app.toolBarLayout.ColumnWidth{5} = 0;
+            app.toolBarLayout.ColumnWidth{12} = 0;
+
+            % 隐藏侧边栏高级按钮
+            app.sideSimulLayout.RowHeight{2} = 0;
+
+            % 隐藏动画演示区
+            app.visualLayout.RowHeight{1} = 0;
+            app.animeAxes.Visible = "off";
+            
+            switch app.m_currentScenario
                 case 'teaching'
-                    % 隐藏侧边栏高级按钮
-                    app.sideSimulLayout.RowHeight{2} = 0;
-                    
-                case 'research'
-                    % 显示侧边栏高级按钮
-                    app.sideSimulLayout.RowHeight{2} = 'fit';
+                    % 显示 toolbar 状态按钮
+                    app.toolBarLayout.ColumnWidth{1} = 64;
+                    app.toolBarLayout.ColumnWidth{2} = 64;
+                    app.toolBarLayout.ColumnWidth{3} = 64;
+                    app.toolBarLayout.ColumnWidth{4} = 64;
+                    app.toolBarLayout.ColumnWidth{5} = 64;
 
-                    % 重新排布 toolbar 按钮
+                    % 显示动画演示区
+                    app.visualLayout.RowHeight{1} = '1x';
+                    app.animeAxes.Visible = "on";
+    
+                case 'research'
+                    % 重新排布 toolbar 状态按钮
                     app.resultButton.Layout.Column = 1;
                     app.replayButton.Layout.Column = 2;
                     app.startButton.Layout.Column = 3;
                     app.pauseButton.Layout.Column = 4;
                     app.continueButton.Layout.Column = 5;
-                    % 隐藏 toolbar 基础按钮
-                    app.toolBarLayout.ColumnWidth{3} = 0;
-                    app.toolBarLayout.ColumnWidth{4} = 0;
-                    app.toolBarLayout.ColumnWidth{5} = 0;
 
-                    % 关掉动画演示区
-                    app.visualLayout.RowHeight{1} = 0;
-                    app.animeAxes.Visible = "off";
+                    % 显示 toolbar 状态按钮
+                    app.toolBarLayout.ColumnWidth{1} = 64;
+                    app.toolBarLayout.ColumnWidth{2} = 64;
 
-                otherwise
-                    % 显示所有侧边栏
+                    % 显示侧边栏高级按钮
                     app.sideSimulLayout.RowHeight{2} = 'fit';
 
-                    % 显示账号导入按钮
-                    app.toolBarLayout.ColumnWidth{10} = 64;
+                otherwise
+                    % 显示 toolbar 按钮
+                    app.toolBarLayout.ColumnWidth{1} = 64;
+                    app.toolBarLayout.ColumnWidth{2} = 64;
+                    app.toolBarLayout.ColumnWidth{3} = 64;
+                    app.toolBarLayout.ColumnWidth{4} = 64;
+                    app.toolBarLayout.ColumnWidth{5} = 64;
+                    app.toolBarLayout.ColumnWidth{12} = 64;
+
+                    % 显示侧边栏高级按钮
+                    app.sideSimulLayout.RowHeight{2} = 'fit';
+
+                    % 显示动画演示区
+                    app.visualLayout.RowHeight{1} = '1x';
+                    app.animeAxes.Visible = "on";
             end  
 
-            % 2.显示可视化Panel
-            setPanel(app,'可视化');
+            % 2.显示仿真可视化Panel
+            setPage(app,'仿真可视化');
 
             % 3.设置状态
             setStatus(app,'准备就绪');
@@ -335,7 +354,7 @@ classdef MainWindow < matlab.apps.AppBase
 
             %% toolBar
             app.toolBarLayout = uigridlayout(app.uiLayout);
-            app.toolBarLayout.ColumnWidth = {64, 64, 64, 64, 64, 20, 64, 64, 20, 64, 64, '1x'};
+            app.toolBarLayout.ColumnWidth = {64, 64, 64, 64, 64, 20, 64, 64, 20, 64, 64, 64, '1x'};
             app.toolBarLayout.RowHeight = {'1x'};
             app.toolBarLayout.ColumnSpacing = 0;
             app.toolBarLayout.RowSpacing = 0;
@@ -379,15 +398,13 @@ classdef MainWindow < matlab.apps.AppBase
             app.paramsAddButton = uibutton(app.toolBarLayout, 'push');
             app.paramsAddButton.Layout.Row = 1;
             app.paramsAddButton.Layout.Column = 7;
-            app.paramsAddButton.Text = '新增参数配置';
-            app.paramsAddButton.FontSize = 11;
+            app.paramsAddButton.Text = '新增配置';
             app.paramsAddButton.ButtonPushedFcn = createCallbackFcn(app,@paramsAddBtnPushed);
 
             app.paramsDeleteButton = uibutton(app.toolBarLayout, 'push');
             app.paramsDeleteButton.Layout.Row = 1;
             app.paramsDeleteButton.Layout.Column = 8;
-            app.paramsDeleteButton.Text = '删除参数配置';
-            app.paramsDeleteButton.FontSize = 11;
+            app.paramsDeleteButton.Text = '删除配置';
             app.paramsDeleteButton.ButtonPushedFcn = createCallbackFcn(app,@paramsDeleteBtnPushed);
 
             app.separator2Label = uilabel(app.toolBarLayout);
@@ -398,15 +415,22 @@ classdef MainWindow < matlab.apps.AppBase
             app.separator2Label.Text = '|';
             app.separator2Label.Enable = "off";
 
+            app.recordDeleteButton = uibutton(app.toolBarLayout, 'push');
+            app.recordDeleteButton.Layout.Row = 1;
+            app.recordDeleteButton.Layout.Column = 10;
+            app.recordDeleteButton.Text = '删除记录';
+            app.recordDeleteButton.ButtonPushedFcn = createCallbackFcn(app,@recordDeleteBtnPushed);
+
+            app.recordExportButton = uibutton(app.toolBarLayout, 'push');
+            app.recordExportButton.Layout.Row = 1;
+            app.recordExportButton.Layout.Column = 11;
+            app.recordExportButton.Text = '导出记录';
+            app.recordExportButton.ButtonPushedFcn = createCallbackFcn(app,@recordExportBtnPushed);
+
             app.accountImportButton = uibutton(app.toolBarLayout, 'push');
             app.accountImportButton.Layout.Row = 1;
-            app.accountImportButton.Layout.Column = 10;
+            app.accountImportButton.Layout.Column = 12;
             app.accountImportButton.Text = '导入账号';
-
-            app.dataExportButton = uibutton(app.toolBarLayout, 'push');
-            app.dataExportButton.Layout.Row = 1;
-            app.dataExportButton.Layout.Column = 11;
-            app.dataExportButton.Text = '导出数据';
 
             %% sideBar
             app.sideBarLayout = uigridlayout(app.uiLayout);
@@ -431,25 +455,25 @@ classdef MainWindow < matlab.apps.AppBase
             app.basicParamButton.Layout.Row = 1;
             app.basicParamButton.Layout.Column = 1;
             app.basicParamButton.Text = '基本参数';
-            app.basicParamButton.ButtonPushedFcn = createCallbackFcn(app,@(src,event)setPanel(app,'基本参数'));
+            app.basicParamButton.ButtonPushedFcn = createCallbackFcn(app,@(src,event)setPage(app,'基本参数'));
 
             app.advanParamButton = uibutton(app.sideSimulLayout, 'push');
             app.advanParamButton.Layout.Row = 2;
             app.advanParamButton.Layout.Column = 1;
             app.advanParamButton.Text = '高级参数';
-            app.advanParamButton.ButtonPushedFcn = createCallbackFcn(app,@(src,event)setPanel(app,'高级参数'));
+            app.advanParamButton.ButtonPushedFcn = createCallbackFcn(app,@(src,event)setPage(app,'高级参数'));
 
             app.simulVisualButton = uibutton(app.sideSimulLayout, 'push');
             app.simulVisualButton.Layout.Row = 3;
             app.simulVisualButton.Layout.Column = 1;
             app.simulVisualButton.Text = '仿真可视化';
-            app.simulVisualButton.ButtonPushedFcn = createCallbackFcn(app,@(src,event)setPanel(app,'可视化'));
+            app.simulVisualButton.ButtonPushedFcn = createCallbackFcn(app,@(src,event)setPage(app,'仿真可视化'));
 
-            app.historyDataButton = uibutton(app.sideSimulLayout, 'push');
-            app.historyDataButton.Layout.Row = 4;
-            app.historyDataButton.Layout.Column = 1;
-            app.historyDataButton.Text = '历史数据';
-            app.historyDataButton.ButtonPushedFcn = createCallbackFcn(app,@(src,event)setPanel(app,'历史数据'));
+            app.historyRecordButton = uibutton(app.sideSimulLayout, 'push');
+            app.historyRecordButton.Layout.Row = 4;
+            app.historyRecordButton.Layout.Column = 1;
+            app.historyRecordButton.Text = '历史记录';
+            app.historyRecordButton.ButtonPushedFcn = createCallbackFcn(app,@(src,event)setPage(app,'历史记录'));
 
             % sideSystemPanel
             app.sideSystemPanel = uipanel(app.sideBarLayout);
@@ -472,7 +496,7 @@ classdef MainWindow < matlab.apps.AppBase
             app.aboutButton.Layout.Row = 2;
             app.aboutButton.Layout.Column = 1;
             app.aboutButton.Text = '关于';
-            app.aboutButton.ButtonPushedFcn = createCallbackFcn(app,@(src,event)setPanel(app,'关于'));
+            app.aboutButton.ButtonPushedFcn = createCallbackFcn(app,@(src,event)setPage(app,'关于'));
 
             % sideStatusPanel
             app.sideStatusPanel = uipanel(app.sideBarLayout);
@@ -516,22 +540,22 @@ classdef MainWindow < matlab.apps.AppBase
             app.currentParamsLabel = uilabel(app.selectLayout);
             app.currentParamsLabel.Layout.Row = 1;
             app.currentParamsLabel.Layout.Column = 1;
-            app.currentParamsLabel.Text = '当前参数配置';
+            app.currentParamsLabel.Text = '当前配置';
 
             app.currentParamsDropDown = uidropdown(app.selectLayout);
             app.currentParamsDropDown.Layout.Row = 1;
             app.currentParamsDropDown.Layout.Column = 2;
             app.currentParamsDropDown.ValueChangedFcn = createCallbackFcn(app,@currentParamsValueChanged,true);
 
-            app.historyLabel = uilabel(app.selectLayout);
-            app.historyLabel.Layout.Row = 1;
-            app.historyLabel.Layout.Column = 3;
-            app.historyLabel.Text = '仿真记录';
+            app.historyRecordLabel = uilabel(app.selectLayout);
+            app.historyRecordLabel.Layout.Row = 1;
+            app.historyRecordLabel.Layout.Column = 3;
+            app.historyRecordLabel.Text = '仿真记录';
 
-            app.historyDropDown = uidropdown(app.selectLayout);
-            app.historyDropDown.Layout.Row = 1;
-            app.historyDropDown.Layout.Column = 4;
-            app.historyDropDown.ValueChangedFcn = createCallbackFcn(app,@historyValueChanged,true);
+            app.historyRecordDropDown = uidropdown(app.selectLayout);
+            app.historyRecordDropDown.Layout.Row = 1;
+            app.historyRecordDropDown.Layout.Column = 4;
+            app.historyRecordDropDown.ValueChangedFcn = createCallbackFcn(app,@historyValueChanged,true);
 
             %% basicParamLayout
             app.basicParamLayout = uigridlayout(app.mainLayout);
@@ -1105,30 +1129,36 @@ classdef MainWindow < matlab.apps.AppBase
             app.controlInputAxes.Layout.Row = 3;
             app.controlInputAxes.Layout.Column = 2;
 
-            %% historyLayout
-            app.historyLayout = uigridlayout(app.mainLayout);
-            app.historyLayout.ColumnWidth = {'1x'};
-            app.historyLayout.RowHeight = {'1x'};
-            app.historyLayout.Padding = [0 0 0 0];
-            app.historyLayout.Layout.Row = 2;
-            app.historyLayout.Layout.Column = 1;
+            %% historyRecordLayout
+            app.historyRecordLayout = uigridlayout(app.mainLayout);
+            app.historyRecordLayout.ColumnWidth = {'1x'};
+            app.historyRecordLayout.RowHeight = {'1x'};
+            app.historyRecordLayout.Padding = [0 0 0 0];
+            app.historyRecordLayout.Layout.Row = 2;
+            app.historyRecordLayout.Layout.Column = 1;
 
-            app.historyTable = uitable(app.historyLayout);
-            app.historyTable.ColumnName = {'Column 1'; 'Column 2'; 'Column 3'; 'Column 4'};
-            app.historyTable.RowName = {};
-            app.historyTable.Layout.Row = 1;
-            app.historyTable.Layout.Column = 1;
+            app.historyRecordTable = uitable(app.historyRecordLayout);
+            %app.historyRecordTable.ColumnName = {'Column 1'; 'Column 2'; 'Column 3'; 'Column 4'};
+            app.historyRecordTable.RowName = {};
+            app.historyRecordTable.Layout.Row = 1;
+            app.historyRecordTable.Layout.Column = 1;
 
             %% aboutLayout
             app.aboutLayout = uigridlayout(app.mainPanel);
 
         end
 
-        function setPanel(app, panelname)
+        function setPage(app, page)
             if ~app.isParamSaved
                 uialert(app.uiFigure,'参数未保存，请先保存参数!','错误');
                 return;
             end
+
+            % 判断仿真记录是否为空
+            if strcmp(page, '历史记录') && isempty(app.m_historyRecordList)
+                uialert(app.uiFigure,'没有可用的仿真历史记录!','错误');
+                return;
+            end    
 
             % 隐藏 mainPanel
             app.mainLayout.Visible = "off";
@@ -1139,7 +1169,7 @@ classdef MainWindow < matlab.apps.AppBase
             app.basicParamLayout.Visible = "off";
             app.advanParamLayout.Visible = "off";
             app.visualLayout.Visible = "off";
-            app.historyLayout.Visible = "off";
+            app.historyRecordLayout.Visible = "off";
  
             % 隐藏 selectLayout
             app.selectLayout.ColumnWidth{1}=0;
@@ -1147,71 +1177,91 @@ classdef MainWindow < matlab.apps.AppBase
             app.selectLayout.ColumnWidth{3}=0;
             app.selectLayout.ColumnWidth{4}=0;
 
-            % 禁用后四个 toolbar 按钮
+            % 禁用 toolbar 非状态按钮
             app.paramsAddButton.Enable = "off";
             app.paramsDeleteButton.Enable = "off";
+            app.recordDeleteButton.Enable = "off";
+            app.recordExportButton.Enable = "off";
             app.accountImportButton.Enable = "off";
-            app.dataExportButton.Enable = "off";
-
-            switch panelname
+            
+            switch page
                 case '基本参数'
+                    % 启用 toolbar 按钮
                     app.paramsAddButton.Enable = "on";
                     app.paramsDeleteButton.Enable = "on";
 
+                    % 显示 参数配置下拉框
                     app.selectLayout.ColumnWidth{1}='fit';
                     app.selectLayout.ColumnWidth{2}='1x';
                     app.selectLayout.Visible = "on";
 
+                    % 显示 基本参数页面
                     app.basicParamLayout.Visible = "on";
 
+                    % 显示 主页面
                     app.mainLayout.Visible = "on";
 
                 case '高级参数'   
+                    % 启用 toolbar 按钮
                     app.paramsAddButton.Enable = "on";
                     app.paramsDeleteButton.Enable = "on";
 
+                    % 显示 参数配置下拉框
                     app.selectLayout.ColumnWidth{1}='fit';
                     app.selectLayout.ColumnWidth{2}='1x';
                     app.selectLayout.Visible = "on";
 
+                    % 显示 高级参数页面
                     app.advanParamLayout.Visible = "on";
-
+                    
+                    % 显示 主页面
                     app.mainLayout.Visible = "on";
 
-                case '可视化'
+                case '仿真可视化'
+                    % 显示 参数配置下拉框
                     app.selectLayout.ColumnWidth{1}='fit';
                     app.selectLayout.ColumnWidth{2}='1x';
                     app.selectLayout.Visible = "on";
 
+                    % 显示 仿真可视化页面
                     app.visualLayout.Visible = "on";
 
+                    % 显示 主页面
                     app.mainLayout.Visible = "on";
 
-                case '历史数据'
-                    app.dataExportButton.Enable = "on";
+                case '历史记录'
+                    % 启用 toolbar 按钮 只有历史记录数 > 1 的时候才允许删除记录
+                    if length(app.m_historyRecordList) > 1
+                        app.recordDeleteButton.Enable = "on";
+                    end    
+                    app.recordExportButton.Enable = "on";
 
+                    % 显示 历史记录下拉框
                     app.selectLayout.ColumnWidth{3}='fit';
                     app.selectLayout.ColumnWidth{4}='1x';
                     app.selectLayout.Visible = "on";
 
-                    app.historyLayout.Visible = "on";
+                    % 显示 历史记录页面
+                    app.historyRecordLayout.Visible = "on";
 
+                    % 显示 主页面
                     app.mainLayout.Visible = "on";
                     
                 case '关于'
+                    % 启用 toolbar 按钮
                     app.accountImportButton.Enable = "on"; 
                     
+                    % 显示 关于页面
                     app.aboutLayout.Visible = "on";
-                otherwise
 
             end
 
-            app.mainPanel.Title = panelname;
-            app.m_currentPanel = panelname;   
+            app.mainPanel.Title = page;
+            app.m_currentPage = page;   
         end
 
         function setStatus(app, status)
-            % 禁用toolbar控制按钮
+            % 禁用 toolbar 状态控制按钮
             app.startButton.Enable = "off";
             app.pauseButton.Enable = "off";
             app.continueButton.Enable = "off";
@@ -1299,8 +1349,14 @@ classdef MainWindow < matlab.apps.AppBase
             app.energyRealtimeTextArea.Value = '';
 
             updateHistoryList(app);
+            app.historyRecordDropDown.Items = app.m_historyRecordList;
+            if ~isempty(app.m_historyRecordList)
+                app.historyRecordDropDown.Value = app.historyRecordDropDown.Items{end};
+                historyValueChanged(app);
+            end    
+            
 
-            % 可视化
+            % 仿真可视化
             cla(app.animeAxes);
             cla(app.positionAxes);
             cla(app.velocityAxes);
@@ -1318,7 +1374,7 @@ classdef MainWindow < matlab.apps.AppBase
             legend(app.errorAxes,'off');
             legend(app.controlInputAxes,'off');
 
-            % 历史数据
+            % 历史记录
         end
 
         function calculateResult(app)
@@ -2138,9 +2194,12 @@ classdef MainWindow < matlab.apps.AppBase
 
             writeResult(app);
 
+            % 改变状态
+            setStatus(app,'正在运行');
+
             updateHistoryList(app);
-            app.historyDropDown.Items = app.m_historyList;
-            app.historyDropDown.Value = app.historyDropDown.Items{end};
+            app.historyRecordDropDown.Items = app.m_historyRecordList;
+            app.historyRecordDropDown.Value = app.historyRecordDropDown.Items{end};
             historyValueChanged(app);
 
 
@@ -2154,7 +2213,7 @@ classdef MainWindow < matlab.apps.AppBase
             app.m_stepTimer.Period = frequency;
             app.m_stepNumGone = 0;
 
-            % 准备可视化
+            % 准备仿真可视化
             cla(app.animeAxes);
             cla(app.positionAxes);
             cla(app.velocityAxes);
@@ -2201,12 +2260,11 @@ classdef MainWindow < matlab.apps.AppBase
             start(app.m_stepTimer);
 
             % 切换界面
-            if ~strcmp(app.m_currentPanel, '可视化')
-                setPanel(app,'可视化');
+            if ~strcmp(app.m_currentPage, '仿真可视化')
+                setPage(app,'仿真可视化');
             end   
 
-            % 改变状态
-            setStatus(app,'正在运行');
+
         end   
 
         function pauseBtnPushed(app,event)
@@ -2219,8 +2277,8 @@ classdef MainWindow < matlab.apps.AppBase
             stop(app.m_stepTimer);
 
             % 切换界面
-            if ~strcmp(app.m_currentPanel, '可视化')
-                setPanel(app,'可视化');
+            if ~strcmp(app.m_currentPage, '仿真可视化')
+                setPage(app,'仿真可视化');
             end  
 
             % 改变状态
@@ -2242,8 +2300,8 @@ classdef MainWindow < matlab.apps.AppBase
             start(app.m_stepTimer);
 
             % 切换界面
-            if ~strcmp(app.m_currentPanel, '可视化')
-                setPanel(app,'可视化');
+            if ~strcmp(app.m_currentPage, '仿真可视化')
+                setPage(app,'仿真可视化');
             end   
 
             % 设置状态
@@ -2283,6 +2341,14 @@ classdef MainWindow < matlab.apps.AppBase
                             % 计算结果
                             calculateResult(app);
 
+                            writeResult(app);
+
+                            updateHistoryList(app);
+                            app.historyRecordDropDown.Items = app.m_historyRecordList;
+                            app.historyRecordDropDown.Value = app.historyRecordDropDown.Items{end};
+                            historyValueChanged(app);
+
+
                         case '回放中'     
                             stop(app.m_stepTimer);
                             app.m_stepNumGone = 0;
@@ -2299,7 +2365,7 @@ classdef MainWindow < matlab.apps.AppBase
                     totalTime = timeVector(end);
                     [trainNum, stepNum] = size(position);
 
-                    % 准备可视化
+                    % 准备仿真可视化
                     cla(app.positionAxes);
                     cla(app.velocityAxes);
                     cla(app.errorAxes);
@@ -2382,8 +2448,8 @@ classdef MainWindow < matlab.apps.AppBase
             setStatus(app,'准备就绪');
 
             % 切换界面
-            if ~strcmp(app.m_currentPanel, '可视化')
-                setPanel(app,'可视化');
+            if ~strcmp(app.m_currentPage, '仿真可视化')
+                setPage(app,'仿真可视化');
             end 
 
         end
@@ -2437,8 +2503,8 @@ classdef MainWindow < matlab.apps.AppBase
             start(app.m_stepTimer);
 
             % 切换界面
-            if ~strcmp(app.m_currentPanel, '可视化')
-                setPanel(app,'可视化');
+            if ~strcmp(app.m_currentPage, '仿真可视化')
+                setPage(app,'仿真可视化');
             end  
 
             % 设置状态
@@ -2504,11 +2570,58 @@ classdef MainWindow < matlab.apps.AppBase
             app.currentParamsDropDown.Value = 'default';
             currentParamsValueChanged(app);
 
-
             % 成功
             uialert(app.uiFigure,'删除成功!','删除参数配置','Icon','success')
         end    
 
+        function recordDeleteBtnPushed(app, event)
+            if ~app.isParamSaved
+                uialert(app.uiFigure,'参数未保存，请先保存参数!','错误');
+                return;
+            end
+
+            tablename = app.historyRecordDropDown.Value;
+            choice = uiconfirm(app.uiFigure,sprintf('确定要删除当前仿真记录 %s 吗?',tablename),'删除历史记录',"Options",["确定删除","我再想想"],"DefaultOption",2,"CancelOption",2);
+            if strcmp(choice, '我再想想')
+                return;
+            end
+
+            app.m_dbCenter.deleteTable(tablename);
+
+            updateHistoryList(app);
+            app.historyRecordDropDown.Items = app.m_historyRecordList;
+            app.historyRecordDropDown.Value = app.historyRecordDropDown.Items{end};
+            historyValueChanged(app);
+   
+            % 成功
+            uialert(app.uiFigure,'删除成功!','删除仿真记录','Icon','success')
+
+            % 一旦仿真记录数量 <= 1 就触发禁用删除
+            setPage(app,'历史记录');
+        end
+
+        function recordExportBtnPushed(app, event)
+            if ~app.isParamSaved
+                uialert(app.uiFigure,'参数未保存，请先保存参数!','错误');
+                return;
+            end
+            tablename = app.historyRecordDropDown.Value;
+            fileFullName = sprintf('%s.xlsx', tablename);
+            [filename, pathname] = uiputfile({'*.xlsx', 'Excel Files (*.xlsx)'}, '导出仿真数据', fileFullName);
+
+            if (filename==0)&(pathname==0)
+                return;
+            end
+
+            fileFullPath = fullfile(pathname, filename);
+            table = app.historyRecordTable.Data;
+
+            writetable(table, fileFullPath, 'Sheet', '仿真记录');
+
+            uialert(app.uiFigure, sprintf('仿真记录已成功导出到:\n%s', fileFullPath), '导出记录','Icon','success');
+
+        end
+        
         function stepTimerFunc(app)
             % 渲染画面
             currentStep = app.m_stepNumGone + app.m_stepTimer.TasksExecuted;
@@ -2669,7 +2782,7 @@ classdef MainWindow < matlab.apps.AppBase
         end    
 
         function updateHistoryList(app)
-            app.m_historyList = {};
+            app.m_historyRecordList = {};
 
             rf = rowfilter("type");
             rf = (rf.type == "table");
@@ -2683,14 +2796,16 @@ classdef MainWindow < matlab.apps.AppBase
                     c = char(s);           % 转为字符向量
                     % 检查倒数第7位和倒数第14位是否为 '_'
                     if c(end-6) == '_' && c(end-13) == '_' && contains(s, name)
-                        app.m_historyList{end+1} = char(s);  % 将符合条件的 string 存入元胞数组
+                        app.m_historyRecordList{end+1} = char(s);  % 将符合条件的 string 存入元胞数组
                     end
                 end
             end
         end
 
         function historyValueChanged(app, event)
-            
+            tablename = app.historyRecordDropDown.Value;
+            result = app.m_dbCenter.selectAllCondition(tablename);
+            app.historyRecordTable.Data = result;
         end
 
     end

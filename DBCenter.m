@@ -86,10 +86,15 @@ classdef DBCenter < handle
         function records = selectAllCondition(obj, tableName, conditionRowFilter) 
             % SELECT * FROM tableName WHERE condition
             obj.m_lastError = '';
-            records = table();
+            records = table();     
 
             try 
-                records = sqlread(obj.m_conn, tableName, "RowFilter", conditionRowFilter);
+                if nargin == 2
+                    records = sqlread(obj.m_conn, tableName);
+                else
+                    records = sqlread(obj.m_conn, tableName, "RowFilter", conditionRowFilter);
+                end        
+                
                 
             catch msgException
                 obj.m_lastError = sprintf('表格 %s 条件全查询失败: %s', tableName, msgException.message);
@@ -203,5 +208,24 @@ classdef DBCenter < handle
 
         end    
     
+        function isSuccess = deleteTable(obj, tableName)
+            isSuccess = false;
+            obj.m_lastError = '';
+
+            sql = sprintf('DROP TABLE %s', tableName);
+
+            try
+                execute(obj.m_conn, sql);
+                isSuccess = true;
+
+            catch msgException
+                % 执行过程中有报错
+                obj.m_lastError = sprintf('表格 %s 删除失败: %s', tableName, msgException.message);
+                error(obj.m_lastError);
+            end  
+
+
+        end
+
     end
 end
