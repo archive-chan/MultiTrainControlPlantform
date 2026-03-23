@@ -6,56 +6,56 @@ classdef JsonHelper < handle
     end
     
     methods (Access = public)
-        function obj = JsonHelper(path)
-            obj.m_folderPath = path;
-            obj.m_paramsNameList = {};
-            obj.m_lastError = '';
+        function this = JsonHelper(path)
+            this.m_folderPath = path;
+            this.m_paramsNameList = {};
+            this.m_lastError = '';
             
             % 检查文件夹路径最深层的文件夹是否存在
-            if ~exist(obj.m_folderPath,"dir")
+            if ~exist(this.m_folderPath,"dir")
                 % 不存在 直接创建整个路径中的所有文件夹
-                mkdir(obj.m_folderPath);
+                mkdir(this.m_folderPath);
             end   
             % 存在 检查是否有默认参数集
-            defaultParamFilePath = [obj.m_folderPath,'/default.json'];
+            defaultParamFilePath = [this.m_folderPath,'/default.json'];
             if ~exist(defaultParamFilePath,"file")
                 % 没有 写入默认参数集保存到本地
-                writeDefaultParams(obj, 'default');
+                writeDefaultParams(this, 'default');
                
             end    
             
             % 有 获得本地所有参数集的名字
-            updateParamsNameList(obj);
+            updateParamsNameList(this);
         end    
 
-        function params = getParamsStruct(obj, paramsName)
+        function params = getParamsStruct(this, paramsName)
             params = struct();
             
             % 判断 paramsName 是否存在
-            if ~ismember(obj.m_paramsNameList,paramsName)
+            if ~ismember(this.m_paramsNameList,paramsName)
                 % 不存在
                 return;
             end    
 
             % 存在
-            paramsFilePath = sprintf("%s/%s.json",obj.m_folderPath,paramsName);
+            paramsFilePath = sprintf("%s/%s.json",this.m_folderPath,paramsName);
             params = readstruct(paramsFilePath);
 
         end   
         
-        function saveParamsStruct(obj, paramsName, paramsStruct)
-            paramsFilePath = sprintf("%s/%s.json", obj.m_folderPath, paramsName);
+        function saveParamsStruct(this, paramsName, paramsStruct)
+            paramsFilePath = sprintf("%s/%s.json", this.m_folderPath, paramsName);
             writestruct(paramsStruct,paramsFilePath);
 
         end   
         
-        function updateParamsNameList(obj)
-            files = dir(fullfile(obj.m_folderPath, '*.json'));  % 获取所有 .json 文件
-            obj.m_paramsNameList = extractBefore({files.name}, '.');  % 转为元胞数组
+        function updateParamsNameList(this)
+            files = dir(fullfile(this.m_folderPath, '*.json'));  % 获取所有 .json 文件
+            this.m_paramsNameList = extractBefore({files.name}, '.');  % 转为元胞数组
         end    
     
-        function writeDefaultParams(obj, defaultParamsName)
-            defaultParamFilePath = sprintf("%s/%s.json", obj.m_folderPath, defaultParamsName);
+        function writeDefaultParams(this, defaultParamsName)
+            defaultParamFilePath = sprintf("%s/%s.json", this.m_folderPath, defaultParamsName);
 
             defaultJson = struct();
 
@@ -132,15 +132,15 @@ classdef JsonHelper < handle
 
             writestruct(defaultJson,defaultParamFilePath);
 
-            updateParamsNameList(obj);
+            updateParamsNameList(this);
 
         end    
 
-        function deleteParams(obj, paramsName)
-            paramFilePath = sprintf("%s/%s.json", obj.m_folderPath, paramsName);
+        function deleteParams(this, paramsName)
+            paramFilePath = sprintf("%s/%s.json", this.m_folderPath, paramsName);
             delete(paramFilePath);
 
-            updateParamsNameList(obj);
+            updateParamsNameList(this);
         end
 
     end    

@@ -18,7 +18,7 @@ classdef LoginWindow < matlab.apps.AppBase
         researchCheckBox    matlab.ui.control.CheckBox
         teachingCheckBox    matlab.ui.control.CheckBox
 
-        m_dbcenter          DBCenter
+        m_dbCenter          DBCenter
         m_lastError    
     
     end
@@ -34,9 +34,9 @@ classdef LoginWindow < matlab.apps.AppBase
             showUi(app,'Login');
 
             app.m_lastError = '';
-            app.m_dbcenter = DBCenter('./db/local.db');       
-            if app.m_dbcenter.m_tableNum < 1
-                issuccess = app.m_dbcenter.createTable('account',...
+            app.m_dbCenter = DBCenter('./db/local.db');       
+            if app.m_dbCenter.m_tableNum < 1
+                issuccess = app.m_dbCenter.createTable('account',...
                     strcat("id INTEGER PRIMARY KEY ASC AUTOINCREMENT,",...
                     "username TEXT UNIQUE NOT NULL,",...
                     "password TEXT NOT NULL,",...
@@ -44,16 +44,14 @@ classdef LoginWindow < matlab.apps.AppBase
                 );
                 if ~issuccess
                     % 建表失败
-                    app.m_lastError = app.m_dbcenter.m_lastError;
+                    app.m_lastError = app.m_dbCenter.m_lastError;
                     return;  
                 end  
                 % 插入默认数据
-                isSuccess1 = app.m_dbcenter.insertRecord('account', {'username', 'password', 'scenario'}, {'test', '123', 'administrator'});
-                isSuccess2 = app.m_dbcenter.insertRecord('account', {'username', 'password', 'scenario'}, {'t', '123', 'teaching'});
-                isSuccess3 = app.m_dbcenter.insertRecord('account', {'username', 'password', 'scenario'}, {'r', '123', 'research'});
-                if ~(isSuccess1&&isSuccess2&&isSuccess3)
+                isSuccess1 = app.m_dbCenter.insertRecord('account', {'username', 'password', 'scenario'}, {'admin', '88888888', 'administrator'});
+                if ~(isSuccess1)
                     % 插入失败
-                    app.m_lastError = app.m_dbcenter.m_lastError;
+                    app.m_lastError = app.m_dbCenter.m_lastError;
                     return;  
                 end  
             end    
@@ -62,7 +60,7 @@ classdef LoginWindow < matlab.apps.AppBase
         
         function delete(app)
             delete(app.uiFigure);
-            delete(app.m_dbcenter);
+            delete(app.m_dbCenter);
         end    
         
         function showUi(app, uiName)
@@ -222,7 +220,7 @@ classdef LoginWindow < matlab.apps.AppBase
             % 将输入框内容与数据库比较 检查用户名是否存在
             rf = rowfilter("username");
             rf = (rf.username == username);
-            resultTable = app.m_dbcenter.selectAllCondition("account",rf);
+            resultTable = app.m_dbCenter.selectAllCondition("account",rf);
             if height(resultTable) < 1
                 % 用户名不存在
                 uialert(app.uiFigure,'用户名不存在, 请先注册!','错误');
@@ -288,7 +286,7 @@ classdef LoginWindow < matlab.apps.AppBase
             % 将输入框内容与数据库比较 检查用户名是否存在
             rf = rowfilter("username");
             rf = (rf.username == username);
-            resultTable = app.m_dbcenter.selectAllCondition("account",rf);
+            resultTable = app.m_dbCenter.selectAllCondition("account",rf);
             if height(resultTable) > 0 
                 % 用户名存在
                 uialert(app.uiFigure,'用户名已存在, 请去登录!','错误');
@@ -301,10 +299,10 @@ classdef LoginWindow < matlab.apps.AppBase
                     scenario = 'teaching';
                 end    
                 
-                isSuccess = app.m_dbcenter.insertRecord('account', {'username', 'password', 'scenario'}, {username, password, scenario});
+                isSuccess = app.m_dbCenter.insertRecord('account', {'username', 'password', 'scenario'}, {username, password, scenario});
                 if ~isSuccess
                     % 插入失败
-                    app.m_lastError = app.m_dbcenter.m_lastError;
+                    app.m_lastError = app.m_dbCenter.m_lastError;
                     return;
                     
                 end    

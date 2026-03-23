@@ -10,24 +10,24 @@ classdef DBCenter < handle
     end
 
     methods (Access = public)
-        function obj = DBCenter(path)
+        function this = DBCenter(path)
             % 初始化成员
             if nargin > 0
-                obj.m_dbPath = path;
+                this.m_dbPath = path;
             else
-                obj.m_dbPath = 'local.db';
+                this.m_dbPath = 'local.db';
             end
-            obj.m_tableNum = 0;
-            obj.m_lastError = '';
+            this.m_tableNum = 0;
+            this.m_lastError = '';
 
             try
                 % 获取绝对路径 方便后续连接数据库
-                absolteFullPath = fullfile(pwd,obj.m_dbPath);
+                absolteFullPath = fullfile(pwd,this.m_dbPath);
     
                 % 判断数据库文件路径是否存在
-                if ~exist(obj.m_dbPath,'file')
+                if ~exist(this.m_dbPath,'file')
                     % 不存在 获取路径中文件夹部分       
-                    [dirsPath, ~, ~] = fileparts(obj.m_dbPath);
+                    [dirsPath, ~, ~] = fileparts(this.m_dbPath);
                     
                     % 判断文件夹部分是否为pwd
                     if ~isempty(dirsPath)
@@ -41,72 +41,72 @@ classdef DBCenter < handle
     
                     % 数据库文件要求在pwd下 或 已创建缺失文件夹
                     % 创建数据库db文件 并自动连接
-                    obj.m_conn = sqlite(absolteFullPath,"create");
+                    this.m_conn = sqlite(absolteFullPath,"create");
                 end
     
                 % db文件存在 建立连接
-                obj.m_conn = sqlite(absolteFullPath);
+                this.m_conn = sqlite(absolteFullPath);
 
                 % 查询表数量
                 query = "select count(*) from sqlite_master where type = 'table'";
-                results = fetch(obj.m_conn, query);
-                obj.m_tableNum = results.(1);
+                results = fetch(this.m_conn, query);
+                this.m_tableNum = results.(1);
                 
             catch msgException
                 % 执行过程中有报错
-                obj.m_lastError = sprintf('初始化失败: %s', msgException.message);
-                error(obj.m_lastError);
+                this.m_lastError = sprintf('初始化失败: %s', msgException.message);
+                error(this.m_lastError);
                 
             end
         end
         
-        function delete(obj)
-            close(obj.m_conn);
+        function delete(this)
+            close(this.m_conn);
         end   
 
-        function isSuccess = createTable(obj, tableName, fields)
+        function isSuccess = createTable(this, tableName, fields)
             % CREATE TABLE IF NOT EXISTS tableName ( fields )
-            obj.m_lastError = '';
+            this.m_lastError = '';
             isSuccess = false;
         
             createSql = sprintf('CREATE TABLE IF NOT EXISTS %s ( %s )', tableName, fields);
 
             try
-                execute(obj.m_conn,createSql);
+                execute(this.m_conn,createSql);
                 isSuccess = true;
 
             catch msgException
                 % 执行过程中有报错
-                obj.m_lastError = sprintf('表格 %s 创建失败: %s', tableName, msgException.message);
-                error(obj.m_lastError);
+                this.m_lastError = sprintf('表格 %s 创建失败: %s', tableName, msgException.message);
+                error(this.m_lastError);
 
             end        
         end
 
-        function records = selectAllCondition(obj, tableName, conditionRowFilter) 
+        function records = selectAllCondition(this, tableName, conditionRowFilter) 
             % SELECT * FROM tableName WHERE condition
-            obj.m_lastError = '';
+            this.m_lastError = '';
             records = table();     
 
             try 
                 if nargin == 2
-                    records = sqlread(obj.m_conn, tableName);
+                    records = sqlread(this.m_conn, tableName);
                 else
-                    records = sqlread(obj.m_conn, tableName, "RowFilter", conditionRowFilter);
+                    records = sqlread(this.m_conn, tableName, "RowFilter", conditionRowFilter);
                 end        
                 
                 
             catch msgException
-                obj.m_lastError = sprintf('表格 %s 条件全查询失败: %s', tableName, msgException.message);
-                error(obj.m_lastError);
+                this.m_lastError = sprintf('表格 %s 条件全查询失败: %s', tableName, msgException.message);
+                error(this.m_lastError);
             end    
             
         end
         
-        function isSuccess = insertRecord(obj, tableName, fieldNames, fieldValues)
+        function isSuccess = insertRecord(this, tableName, fieldNames, fieldValues)
             % insert into tableName (username,password,scenario) values()
             isSuccess = false;
-            obj.m_lastError = '';
+            this.m_lastError = '';
 
             % 构建sql语句
             formattedElements = cell(size(fieldValues));
@@ -133,37 +133,37 @@ classdef DBCenter < handle
             insertSql = sprintf('INSERT INTO %s ( %s ) VALUES ( %s )', tableName, namesStr, valuesStr);
 
             try
-                execute(obj.m_conn, insertSql);
+                execute(this.m_conn, insertSql);
                 isSuccess = true;
 
             catch msgException
                 % 执行过程中有报错
-                obj.m_lastError = sprintf('表格 %s 插入记录失败: %s', tableName, msgException.message);
-                error(obj.m_lastError);
+                this.m_lastError = sprintf('表格 %s 插入记录失败: %s', tableName, msgException.message);
+                error(this.m_lastError);
             end        
 
         end    
 
-        function records = selectFieldCondition(obj,tableName,fieldNames,conditionRowFilter)
+        function records = selectFieldCondition(this,tableName,fieldNames,conditionRowFilter)
             % SELECT fieldNames FROM tableName WHERE condition
-            obj.m_lastError = '';
+            this.m_lastError = '';
             records = table();
 
             selectSql = sprintf('SELECT %s FROM %s', strjoin(fieldNames,','), tableName);
 
             try
-                records = fetch(obj.m_conn, selectSql, "RowFilter", conditionRowFilter);
+                records = fetch(this.m_conn, selectSql, "RowFilter", conditionRowFilter);
             catch msgException
-                obj.m_lastError = sprintf('表格 %s 条件字段查询失败: %s', tableName, msgException.message);
-                error(obj.m_lastError);
+                this.m_lastError = sprintf('表格 %s 条件字段查询失败: %s', tableName, msgException.message);
+                error(this.m_lastError);
             end   
 
         end    
     
-        function isSuccess = insertRecords(obj, tableName, fieldNames, fieldValues)
+        function isSuccess = insertRecords(this, tableName, fieldNames, fieldValues)
             % insert into tableName (username,password,scenario) values('nihao', 22, 425)
             isSuccess = false;
-            obj.m_lastError = '';
+            this.m_lastError = '';
 
             namesStr = strjoin(fieldNames,', ');
 
@@ -173,6 +173,9 @@ classdef DBCenter < handle
                 formattedElements = {};
                 for fIndex = 1:length(fieldNames)
                     v = fieldValues{fIndex}(rIndex);
+                    if iscell(v)
+                        v = v{1,1};
+                    end    
                     if isnumeric(v)
                         % 数字类型转换为字符串
                         formattedElements{fIndex} = num2str(v);
@@ -195,33 +198,33 @@ classdef DBCenter < handle
                 insertSql = sprintf('INSERT INTO %s ( %s ) VALUES ( %s )', tableName, namesStr, valuesStr);
 
                 try
-                    execute(obj.m_conn, insertSql);
+                    execute(this.m_conn, insertSql);
                     isSuccess = true;
 
                 catch msgException
                     % 执行过程中有报错
-                    obj.m_lastError = sprintf('表格 %s 批量插入记录失败: %s', tableName, msgException.message);
-                    error(obj.m_lastError);
+                    this.m_lastError = sprintf('表格 %s 批量插入记录失败: %s', tableName, msgException.message);
+                    error(this.m_lastError);
                 end  
                 
             end
 
         end    
     
-        function isSuccess = deleteTable(obj, tableName)
+        function isSuccess = deleteTable(this, tableName)
             isSuccess = false;
-            obj.m_lastError = '';
+            this.m_lastError = '';
 
             sql = sprintf('DROP TABLE %s', tableName);
 
             try
-                execute(obj.m_conn, sql);
+                execute(this.m_conn, sql);
                 isSuccess = true;
 
             catch msgException
                 % 执行过程中有报错
-                obj.m_lastError = sprintf('表格 %s 删除失败: %s', tableName, msgException.message);
-                error(obj.m_lastError);
+                this.m_lastError = sprintf('表格 %s 删除失败: %s', tableName, msgException.message);
+                error(this.m_lastError);
             end  
 
 

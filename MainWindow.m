@@ -179,6 +179,28 @@ classdef MainWindow < matlab.apps.AppBase
 
         %% aboutLayout
         aboutLayout                  matlab.ui.container.GridLayout
+        titleLabel                  matlab.ui.control.Label
+        copyrightLabel              matlab.ui.control.Label
+
+        projectPanel            matlab.ui.container.Panel
+        projectLayout       matlab.ui.container.GridLayout
+        versionLabel        matlab.ui.control.Label
+        versionText         matlab.ui.control.Label
+        releaseLabel        matlab.ui.control.Label
+        releaseLink         matlab.ui.control.Hyperlink
+        licenseLabel        matlab.ui.control.Label
+        licenseLink             matlab.ui.control.Hyperlink
+        developerLabel      matlab.ui.control.Label
+        developerLink           matlab.ui.control.Hyperlink
+
+        infoPanel           matlab.ui.container.Panel
+        infoLayout          matlab.ui.container.GridLayout
+        subjectLabel        matlab.ui.control.Label
+        subjectText     matlab.ui.control.Label
+        authorLabel     matlab.ui.control.Label
+        authorText          matlab.ui.control.Label
+        supervisorLabel matlab.ui.control.Label
+        supervisorText  matlab.ui.control.Label
 
         %% 成员变量
         m_lastError
@@ -431,6 +453,7 @@ classdef MainWindow < matlab.apps.AppBase
             app.accountImportButton.Layout.Row = 1;
             app.accountImportButton.Layout.Column = 12;
             app.accountImportButton.Text = '导入账号';
+            app.accountImportButton.ButtonPushedFcn = createCallbackFcn(app,@accountImportBtnPushed);
 
             %% sideBar
             app.sideBarLayout = uigridlayout(app.uiLayout);
@@ -445,7 +468,7 @@ classdef MainWindow < matlab.apps.AppBase
             app.sideSimulPanel.Title = '仿真';
             app.sideSimulPanel.Layout.Row = 1;
             app.sideSimulPanel.Layout.Column = 1;
-            app.sideSimulPanel.FontSize = 14;
+            app.sideSimulPanel.FontSize = 16;
 
             app.sideSimulLayout = uigridlayout(app.sideSimulPanel);
             app.sideSimulLayout.ColumnWidth = {'1x'};
@@ -480,7 +503,7 @@ classdef MainWindow < matlab.apps.AppBase
             app.sideSystemPanel.Title = '系统';
             app.sideSystemPanel.Layout.Row = 2;
             app.sideSystemPanel.Layout.Column = 1;
-            app.sideSystemPanel.FontSize = 14;
+            app.sideSystemPanel.FontSize = 16;
 
             app.sideSystemLayout = uigridlayout(app.sideSystemPanel);
             app.sideSystemLayout.ColumnWidth = {'1x'};
@@ -503,7 +526,7 @@ classdef MainWindow < matlab.apps.AppBase
             app.sideStatusPanel.Title = '状态';
             app.sideStatusPanel.Layout.Row = 3;
             app.sideStatusPanel.Layout.Column = 1;
-            app.sideStatusPanel.FontSize = 14;
+            app.sideStatusPanel.FontSize = 16;
 
             app.sideStatusLayout = uigridlayout(app.sideStatusPanel);
             app.sideStatusLayout.ColumnWidth = {'1x', '1x', '1x'};
@@ -523,11 +546,12 @@ classdef MainWindow < matlab.apps.AppBase
             app.mainPanel = uipanel(app.uiLayout);
             app.mainPanel.Layout.Row = 2;
             app.mainPanel.Layout.Column = 2;
-            app.mainPanel.FontSize = 14;
+            app.mainPanel.FontSize = 16;
 
             app.mainLayout = uigridlayout(app.mainPanel);
             app.mainLayout.ColumnWidth = {'1x'};
             app.mainLayout.RowHeight = {'fit', '1x'};
+            app.mainLayout.Visible = "off";
 
             % selectLayout
             app.selectLayout = uigridlayout(app.mainLayout);
@@ -1138,13 +1162,151 @@ classdef MainWindow < matlab.apps.AppBase
             app.historyRecordLayout.Layout.Column = 1;
 
             app.historyRecordTable = uitable(app.historyRecordLayout);
-            %app.historyRecordTable.ColumnName = {'Column 1'; 'Column 2'; 'Column 3'; 'Column 4'};
             app.historyRecordTable.RowName = {};
             app.historyRecordTable.Layout.Row = 1;
             app.historyRecordTable.Layout.Column = 1;
 
             %% aboutLayout
             app.aboutLayout = uigridlayout(app.mainPanel);
+            app.aboutLayout.ColumnWidth = {'1x', '1x', '1x'};
+            app.aboutLayout.RowHeight = {'fit', 'fit', 40, 'fit', 'fit', '1x'};
+            app.aboutLayout.Visible = "off";
+
+            app.titleLabel = uilabel(app.aboutLayout);
+            app.titleLabel.FontSize = 24;
+            app.titleLabel.FontWeight = 'bold';
+            app.titleLabel.Layout.Row = 1;
+            app.titleLabel.Layout.Column = [1 2];
+            app.titleLabel.Text = {'MultiTrainControlPlantform'; '多列车协同控制系统仿真平台'};
+
+            app.copyrightLabel = uilabel(app.aboutLayout);
+            app.copyrightLabel.FontSize = 18;
+            app.copyrightLabel.Layout.Row = 2;
+            app.copyrightLabel.Layout.Column = [1 2];
+            app.copyrightLabel.Text = 'Copyright © 2026 zhenghao. All rights reserved.';
+
+            app.projectPanel = uipanel(app.aboutLayout);
+            app.projectPanel.BorderType = 'none';
+            app.projectPanel.Title = '项目';
+            app.projectPanel.Layout.Row = 4;
+            app.projectPanel.Layout.Column = [1 2];
+            app.projectPanel.FontSize = 18;
+
+            app.projectLayout = uigridlayout(app.projectPanel);
+            app.projectLayout.ColumnWidth = {'fit', '1x'};
+            app.projectLayout.RowHeight = {'1x', '1x', '1x', '1x'};
+
+            app.versionLabel = uilabel(app.projectLayout);
+            app.versionLabel.HorizontalAlignment = 'center';
+            app.versionLabel.FontSize = 18;
+            app.versionLabel.FontWeight = 'bold';
+            app.versionLabel.Layout.Row = 1;
+            app.versionLabel.Layout.Column = 1;
+            app.versionLabel.Text = '版本';
+
+            app.versionText = uilabel(app.projectLayout);
+            app.versionText.FontSize = 14;
+            app.versionText.Layout.Row = 1;
+            app.versionText.Layout.Column = 2;
+            app.versionText.Text = 'v0.1 (2026.03.23)';
+
+            app.releaseLabel = uilabel(app.projectLayout);
+            app.releaseLabel.HorizontalAlignment = 'center';
+            app.releaseLabel.FontSize = 18;
+            app.releaseLabel.FontWeight = 'bold';
+            app.releaseLabel.Layout.Row = 2;
+            app.releaseLabel.Layout.Column = 1;
+            app.releaseLabel.Text = '发布地址';
+
+            app.releaseLink = uihyperlink(app.projectLayout);
+            app.releaseLink.FontSize = 14;
+            app.releaseLink.Layout.Row = 2;
+            app.releaseLink.Layout.Column = 2;
+            app.releaseLink.URL = 'https://github.com/archive-chan/MultiTrainControlPlantform';
+            app.releaseLink.Text = 'MultiTrainControlPlantform';
+
+            app.licenseLabel = uilabel(app.projectLayout);
+            app.licenseLabel.HorizontalAlignment = 'center';
+            app.licenseLabel.FontSize = 18;
+            app.licenseLabel.FontWeight = 'bold';
+            app.licenseLabel.Layout.Row = 3;
+            app.licenseLabel.Layout.Column = 1;
+            app.licenseLabel.Text = '许可协议';
+
+            app.licenseLink = uihyperlink(app.projectLayout);
+            app.licenseLink.FontSize = 14;
+            app.licenseLink.Layout.Row = 3;
+            app.licenseLink.Layout.Column = 2;
+            app.licenseLink.URL = 'https://github.com/archive-chan/MultiTrainControlPlantform/blob/main/LICENSE';
+            app.licenseLink.Text = 'MIT';
+
+            app.developerLabel = uilabel(app.projectLayout);
+            app.developerLabel.HorizontalAlignment = 'center';
+            app.developerLabel.FontSize = 18;
+            app.developerLabel.FontWeight = 'bold';
+            app.developerLabel.Layout.Row = 4;
+            app.developerLabel.Layout.Column = 1;
+            app.developerLabel.Text = '开发者';
+
+            app.developerLink = uihyperlink(app.projectLayout);
+            app.developerLink.FontSize = 14;
+            app.developerLink.Layout.Row = 4;
+            app.developerLink.Layout.Column = 2;
+            app.developerLink.URL = 'https://github.com/archive-chan';
+            app.developerLink.Text = 'archive-chan';
+
+            app.infoPanel = uipanel(app.aboutLayout);
+            app.infoPanel.BorderType = 'none';
+            app.infoPanel.Title = '信息';
+            app.infoPanel.Layout.Row = 5;
+            app.infoPanel.Layout.Column = [1 2];
+            app.infoPanel.FontSize = 18;
+
+            app.infoLayout = uigridlayout(app.infoPanel);
+            app.infoLayout.ColumnWidth = {'fit', '1x'};
+            app.infoLayout.RowHeight = {'1x', '1x', '1x'};
+
+            app.subjectLabel = uilabel(app.infoLayout);
+            app.subjectLabel.HorizontalAlignment = 'center';
+            app.subjectLabel.FontSize = 18;
+            app.subjectLabel.FontWeight = 'bold';
+            app.subjectLabel.Layout.Row = 1;
+            app.subjectLabel.Layout.Column = 1;
+            app.subjectLabel.Text = '题目';
+
+            app.subjectText = uilabel(app.infoLayout);
+            app.subjectText.FontSize = 14;
+            app.subjectText.Layout.Row = 1;
+            app.subjectText.Layout.Column = 2;
+            app.subjectText.Text = '多列车协同控制系统的 MATLAB GUI 仿真平台开发';
+
+            app.authorLabel = uilabel(app.infoLayout);
+            app.authorLabel.HorizontalAlignment = 'center';
+            app.authorLabel.FontSize = 18;
+            app.authorLabel.FontWeight = 'bold';
+            app.authorLabel.Layout.Row = 2;
+            app.authorLabel.Layout.Column = 1;
+            app.authorLabel.Text = '作者';
+
+            app.authorText = uilabel(app.infoLayout);
+            app.authorText.FontSize = 14;
+            app.authorText.Layout.Row = 2;
+            app.authorText.Layout.Column = 2;
+            app.authorText.Text = '郑浩';
+
+            app.supervisorLabel = uilabel(app.infoLayout);
+            app.supervisorLabel.FontSize = 18;
+            app.supervisorLabel.FontWeight = 'bold';
+            app.supervisorLabel.Layout.Row = 3;
+            app.supervisorLabel.Layout.Column = 1;
+            app.supervisorLabel.Text = '指导老师';
+
+            app.supervisorText = uilabel(app.infoLayout);
+            app.supervisorText.FontSize = 14;
+            app.supervisorText.Layout.Row = 3;
+            app.supervisorText.Layout.Column = 2;
+            app.supervisorText.Text = '张志鑫';
+
 
         end
 
@@ -1786,6 +1948,11 @@ classdef MainWindow < matlab.apps.AppBase
         end    
 
         function logoutBtnPushed(app,event)
+            if ~app.isParamSaved
+                uialert(app.uiFigure,'参数未保存，请先保存参数!','错误');
+                return;
+            end
+
             choice = uiconfirm(app.uiFigure,'确定要注销账户返回登录页面吗?','退出登录',"Options",["确定退出","我再想想"],"DefaultOption",2,"CancelOption",2);
             if strcmp (choice, '确定退出')
                 notify(app,'Logout');
@@ -1793,6 +1960,11 @@ classdef MainWindow < matlab.apps.AppBase
         end
 
         function closeRequest(app, event)
+            if ~app.isParamSaved
+                uialert(app.uiFigure,'参数未保存，请先保存参数!','错误');
+                return;
+            end
+            
             choice = uiconfirm(app.uiFigure,'确定要直接退出系统吗?','退出系统',"Options",["确定退出","我再想想"],"DefaultOption",2,"CancelOption",2);
             if strcmp (choice, '确定退出')
                 notify(app,'Exit');
@@ -2189,6 +2361,8 @@ classdef MainWindow < matlab.apps.AppBase
                 return;
             end
 
+            progressDialog = uiprogressdlg(app.uiFigure,'Title','仿真计算中……','Indeterminate','on');
+
             % 计算各个变量的结果
             calculateResult(app);
 
@@ -2255,6 +2429,8 @@ classdef MainWindow < matlab.apps.AppBase
             hold(app.velocityAxes,"off");
             hold(app.errorAxes,"off");
             hold(app.controlInputAxes,"off");
+
+            close(progressDialog);
 
             % 启动计时器
             start(app.m_stepTimer);
@@ -2338,10 +2514,14 @@ classdef MainWindow < matlab.apps.AppBase
                             % 设置状态
                             setStatus(app,'正在运行');
 
+                            progressDialog = uiprogressdlg(app.uiFigure,'Title','仿真计算中……','Indeterminate','on');
+
                             % 计算结果
                             calculateResult(app);
 
                             writeResult(app);
+
+                            close(progressDialog);
 
                             updateHistoryList(app);
                             app.historyRecordDropDown.Items = app.m_historyRecordList;
@@ -2622,6 +2802,52 @@ classdef MainWindow < matlab.apps.AppBase
 
         end
         
+        function accountImportBtnPushed(app,event)
+            if ~app.isParamSaved
+                uialert(app.uiFigure,'参数未保存，请先保存参数!','错误');
+                return;
+            end
+
+            [filename, pathname] = uigetfile({'*.xlsx', 'Excel Files (*.xlsx)'}, '导入账号数据');
+
+            if (filename==0)&(pathname==0)
+                return;
+            end
+
+            fileFullPath = fullfile(pathname, filename);
+            t = readtable(fileFullPath, ReadRowNames=true);
+
+
+
+            % 删除表格
+            app.m_dbCenter.deleteTable('account');
+
+            % 重新创建账号表格
+            issuccess = app.m_dbCenter.createTable('account',...
+                    strcat("id INTEGER PRIMARY KEY ASC AUTOINCREMENT,",...
+                    "username TEXT UNIQUE NOT NULL,",...
+                    "password TEXT NOT NULL,",...
+                    "scenario TEXT DEFAULT 'teaching' NOT NULL"));
+            if ~issuccess
+                % 建表失败
+                app.m_lastError = app.m_dbCenter.m_lastError;
+                return;  
+            end  
+            
+            % 批量插入
+            fieldValues = {t.username',t.password',t.scenario'};
+            success = app.m_dbCenter.insertRecords('account', {'username', 'password', 'scenario'}, fieldValues);
+            if ~success
+                app.m_lastError = app.m_dbCenter.m_lastError;
+                return; 
+            end  
+
+            uialert(app.uiFigure, '已成功导入账号信息', '导入账号','Icon','success');
+
+
+
+        end
+
         function stepTimerFunc(app)
             % 渲染画面
             currentStep = app.m_stepNumGone + app.m_stepTimer.TasksExecuted;
@@ -2767,14 +2993,14 @@ classdef MainWindow < matlab.apps.AppBase
             % 创建仿真记录表格
             success = app.m_dbCenter.createTable(tableName, field);
             if ~success
-                app.m_lastError = app.m_dbcenter.m_lastError;
+                app.m_lastError = app.m_dbCenter.m_lastError;
                 return; 
             end    
 
             % 批量插入数据
             success = app.m_dbCenter.insertRecords(tableName, fieldNames, fieldValues);
             if ~success
-                app.m_lastError = app.m_dbcenter.m_lastError;
+                app.m_lastError = app.m_dbCenter.m_lastError;
                 return; 
             end    
 
