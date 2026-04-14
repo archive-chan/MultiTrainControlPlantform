@@ -226,9 +226,6 @@ classdef DBCenter < handle
                 this.m_lastError = sprintf('表格 %s 删除失败: %s', tableName, msgException.message);
                 error(this.m_lastError);
             end  
-
-
         end
-
     end
 end

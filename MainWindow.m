@@ -178,29 +178,36 @@ classdef MainWindow < matlab.apps.AppBase
         historyRecordTable                matlab.ui.control.Table
 
         %% aboutLayout
-        aboutLayout                  matlab.ui.container.GridLayout
-        titleLabel                  matlab.ui.control.Label
-        copyrightLabel              matlab.ui.control.Label
+        aboutLayout         matlab.ui.container.GridLayout
 
-        projectPanel            matlab.ui.container.Panel
-        projectLayout       matlab.ui.container.GridLayout
-        versionLabel        matlab.ui.control.Label
-        versionText         matlab.ui.control.Label
-        releaseLabel        matlab.ui.control.Label
-        releaseLink         matlab.ui.control.Hyperlink
-        licenseLabel        matlab.ui.control.Label
-        licenseLink             matlab.ui.control.Hyperlink
-        developerLabel      matlab.ui.control.Label
-        developerLink           matlab.ui.control.Hyperlink
+        titleLayout         matlab.ui.container.GridLayout
+        titleLabel          matlab.ui.control.Label
+        copyrightLabel      matlab.ui.control.Label
 
         infoPanel           matlab.ui.container.Panel
         infoLayout          matlab.ui.container.GridLayout
+        versionLabel        matlab.ui.control.Label
+        versionDotLabel     matlab.ui.control.Label
+        versionText         matlab.ui.control.Label
+        releaseLabel        matlab.ui.control.Label
+        releaseDotLabel     matlab.ui.control.Label
+        releaseLink         matlab.ui.control.Hyperlink
+        licenseLabel        matlab.ui.control.Label
+        licenseDotLabel     matlab.ui.control.Label
+        licenseLink         matlab.ui.control.Hyperlink
         subjectLabel        matlab.ui.control.Label
-        subjectText     matlab.ui.control.Label
-        authorLabel     matlab.ui.control.Label
+        subjectDotLabel     matlab.ui.control.Label
+        subjectText         matlab.ui.control.Label
+        authorLabel         matlab.ui.control.Label
+        authorDotLabel      matlab.ui.control.Label
         authorText          matlab.ui.control.Label
-        supervisorLabel matlab.ui.control.Label
-        supervisorText  matlab.ui.control.Label
+        supervisorLabel     matlab.ui.control.Label
+        supervisorDotLabel  matlab.ui.control.Label
+        supervisorText      matlab.ui.control.Label
+        
+        restorePanel        matlab.ui.container.Panel
+        restoreLayout       matlab.ui.container.GridLayout
+        restoreButton       matlab.ui.control.Button
 
         %% 成员变量
         m_lastError
@@ -231,6 +238,7 @@ classdef MainWindow < matlab.apps.AppBase
     events
         Logout
         Exit
+        Restore
     end
 
     methods (Access = public)
@@ -301,6 +309,9 @@ classdef MainWindow < matlab.apps.AppBase
             app.visualLayout.RowHeight{1} = 0;
             app.animeAxes.Visible = "off";
             
+            % 隐藏还原按钮
+            app.restoreButton.Visible = "off";
+
             switch app.m_currentScenario
                 case 'teaching'
                     % 显示 toolbar 状态按钮
@@ -344,6 +355,9 @@ classdef MainWindow < matlab.apps.AppBase
                     % 显示动画演示区
                     app.visualLayout.RowHeight{1} = '1x';
                     app.animeAxes.Visible = "on";
+
+                    % 显示还原按钮
+                    app.restoreButton.Visible = "on";
             end  
 
             % 2.显示仿真可视化Panel
@@ -388,26 +402,36 @@ classdef MainWindow < matlab.apps.AppBase
             app.startButton.Layout.Row = 1;
             app.startButton.Text = '开始仿真';
             app.startButton.ButtonPushedFcn = createCallbackFcn(app,@startBtnPushed);
+            app.startButton.Icon = fullfile(pwd, 'icons', 'start.png');
+            app.startButton.IconAlignment = 'top';
 
             app.pauseButton = uibutton(app.toolBarLayout, 'push');
             app.pauseButton.Layout.Row = 1;
             app.pauseButton.Text = '暂停仿真';
             app.pauseButton.ButtonPushedFcn = createCallbackFcn(app,@pauseBtnPushed);
+            app.pauseButton.Icon = fullfile(pwd, 'icons', 'pause.png');
+            app.pauseButton.IconAlignment = 'top';
 
             app.continueButton = uibutton(app.toolBarLayout, 'push');
             app.continueButton.Layout.Row = 1;
             app.continueButton.Text = '继续仿真';
             app.continueButton.ButtonPushedFcn = createCallbackFcn(app,@continueBtnPushed);
+            app.continueButton.Icon = fullfile(pwd, 'icons', 'continue.png');
+            app.continueButton.IconAlignment = 'top';
 
             app.resultButton = uibutton(app.toolBarLayout, 'push');
             app.resultButton.Layout.Row = 1;
             app.resultButton.Text = '仿真结果';
             app.resultButton.ButtonPushedFcn = createCallbackFcn(app,@resultBtnPushed);
+            app.resultButton.Icon = fullfile(pwd, 'icons', 'result.png');
+            app.resultButton.IconAlignment = 'top';
 
             app.replayButton = uibutton(app.toolBarLayout, 'push');
             app.replayButton.Layout.Row = 1;
             app.replayButton.Text = '回放仿真';
             app.replayButton.ButtonPushedFcn = createCallbackFcn(app,@replayBtnPushed);
+            app.replayButton.Icon = fullfile(pwd, 'icons', 'replay.png');
+            app.replayButton.IconAlignment = 'top';
 
             app.separator1Label = uilabel(app.toolBarLayout);
             app.separator1Label.HorizontalAlignment = 'center';
@@ -422,12 +446,16 @@ classdef MainWindow < matlab.apps.AppBase
             app.paramsAddButton.Layout.Column = 7;
             app.paramsAddButton.Text = '新增配置';
             app.paramsAddButton.ButtonPushedFcn = createCallbackFcn(app,@paramsAddBtnPushed);
+            app.paramsAddButton.Icon = fullfile(pwd, 'icons', 'paramsAdd.png');
+            app.paramsAddButton.IconAlignment = 'top';
 
             app.paramsDeleteButton = uibutton(app.toolBarLayout, 'push');
             app.paramsDeleteButton.Layout.Row = 1;
             app.paramsDeleteButton.Layout.Column = 8;
             app.paramsDeleteButton.Text = '删除配置';
             app.paramsDeleteButton.ButtonPushedFcn = createCallbackFcn(app,@paramsDeleteBtnPushed);
+            app.paramsDeleteButton.Icon = fullfile(pwd, 'icons', 'paramsDelete.png');
+            app.paramsDeleteButton.IconAlignment = 'top';
 
             app.separator2Label = uilabel(app.toolBarLayout);
             app.separator2Label.HorizontalAlignment = 'center';
@@ -442,18 +470,24 @@ classdef MainWindow < matlab.apps.AppBase
             app.recordDeleteButton.Layout.Column = 10;
             app.recordDeleteButton.Text = '删除记录';
             app.recordDeleteButton.ButtonPushedFcn = createCallbackFcn(app,@recordDeleteBtnPushed);
+            app.recordDeleteButton.Icon = fullfile(pwd, 'icons', 'recordDelete.png');
+            app.recordDeleteButton.IconAlignment = 'top';
 
             app.recordExportButton = uibutton(app.toolBarLayout, 'push');
             app.recordExportButton.Layout.Row = 1;
             app.recordExportButton.Layout.Column = 11;
             app.recordExportButton.Text = '导出记录';
             app.recordExportButton.ButtonPushedFcn = createCallbackFcn(app,@recordExportBtnPushed);
+            app.recordExportButton.Icon = fullfile(pwd, 'icons', 'recordExport.png');
+            app.recordExportButton.IconAlignment = 'top';
 
             app.accountImportButton = uibutton(app.toolBarLayout, 'push');
             app.accountImportButton.Layout.Row = 1;
             app.accountImportButton.Layout.Column = 12;
             app.accountImportButton.Text = '导入账号';
             app.accountImportButton.ButtonPushedFcn = createCallbackFcn(app,@accountImportBtnPushed);
+            app.accountImportButton.Icon = fullfile(pwd, 'icons', 'accountImport.png');
+            app.accountImportButton.IconAlignment = 'top';
 
             %% sideBar
             app.sideBarLayout = uigridlayout(app.uiLayout);
@@ -1168,146 +1202,184 @@ classdef MainWindow < matlab.apps.AppBase
 
             %% aboutLayout
             app.aboutLayout = uigridlayout(app.mainPanel);
-            app.aboutLayout.ColumnWidth = {'1x', '1x', '1x'};
-            app.aboutLayout.RowHeight = {'fit', 'fit', 40, 'fit', 'fit', '1x'};
+            app.aboutLayout.ColumnWidth = {'1x'};
+            app.aboutLayout.RowHeight = {'fit', 30, 'fit', 'fit', '1x'};
             app.aboutLayout.Visible = "off";
 
-            app.titleLabel = uilabel(app.aboutLayout);
-            app.titleLabel.FontSize = 24;
-            app.titleLabel.FontWeight = 'bold';
-            app.titleLabel.Layout.Row = 1;
-            app.titleLabel.Layout.Column = [1 2];
-            app.titleLabel.Text = {'MultiTrainControlPlantform'; '多列车协同控制系统仿真平台'};
+            % titleLayout
+            app.titleLayout = uigridlayout(app.aboutLayout);
+            app.titleLayout.ColumnWidth = {'1x'};
+            app.titleLayout.RowHeight = {'fit', 'fit'};
+            app.titleLayout.ColumnSpacing = 0;
+            app.titleLayout.RowSpacing = 0;
+            app.titleLayout.Padding = [0 0 0 0];
+            app.titleLayout.Layout.Row = 1;
+            app.titleLayout.Layout.Column = 1;
 
-            app.copyrightLabel = uilabel(app.aboutLayout);
+            app.titleLabel = uilabel(app.titleLayout);
+            app.titleLabel.FontName = '思源黑体 CN Heavy';
+            app.titleLabel.FontSize = 36;
+            app.titleLabel.Layout.Row = 1;
+            app.titleLabel.Layout.Column = 1;
+            app.titleLabel.Text = {'多列车协同控制系统仿真平台'; 'MultiTrainControlPlantform'};
+
+            app.copyrightLabel = uilabel(app.titleLayout);
             app.copyrightLabel.FontSize = 18;
             app.copyrightLabel.Layout.Row = 2;
-            app.copyrightLabel.Layout.Column = [1 2];
+            app.copyrightLabel.Layout.Column = 1;
             app.copyrightLabel.Text = 'Copyright © 2026 zhenghao. All rights reserved.';
 
-            app.projectPanel = uipanel(app.aboutLayout);
-            app.projectPanel.BorderType = 'none';
-            app.projectPanel.Title = '项目';
-            app.projectPanel.Layout.Row = 4;
-            app.projectPanel.Layout.Column = [1 2];
-            app.projectPanel.FontSize = 18;
+            % infoPanel
+            app.infoPanel = uipanel(app.aboutLayout);
+            app.infoPanel.BorderType = 'none';
+            app.infoPanel.Title = ' ';
+            app.infoPanel.Layout.Row = 3;
+            app.infoPanel.Layout.Column = 1;
 
-            app.projectLayout = uigridlayout(app.projectPanel);
-            app.projectLayout.ColumnWidth = {'fit', '1x'};
-            app.projectLayout.RowHeight = {'1x', '1x', '1x', '1x'};
+            % infoLayout
+            app.infoLayout = uigridlayout(app.infoPanel);
+            app.infoLayout.ColumnWidth = {100, 40, '1x'};
+            app.infoLayout.RowHeight = {'1x', '1x', '1x', '1x', '1x', '1x'};
+            app.infoLayout.ColumnSpacing = 0;
+            app.infoLayout.RowSpacing = 5;
+            app.infoLayout.Padding = [0 0 0 5];
 
-            app.versionLabel = uilabel(app.projectLayout);
+            app.versionLabel = uilabel(app.infoLayout);
             app.versionLabel.HorizontalAlignment = 'center';
-            app.versionLabel.FontSize = 18;
-            app.versionLabel.FontWeight = 'bold';
+            app.versionLabel.FontSize = 15;
             app.versionLabel.Layout.Row = 1;
             app.versionLabel.Layout.Column = 1;
-            app.versionLabel.Text = '版本';
+            app.versionLabel.Text = '当前版本';
 
-            app.versionText = uilabel(app.projectLayout);
-            app.versionText.FontSize = 14;
+            app.versionDotLabel = uilabel(app.infoLayout);
+            app.versionDotLabel.FontSize = 15;
+            app.versionDotLabel.Layout.Row = 1;
+            app.versionDotLabel.Layout.Column = 2;
+            app.versionDotLabel.Text = '•';
+
+            app.versionText = uilabel(app.infoLayout);
+            app.versionText.FontSize = 15;
             app.versionText.Layout.Row = 1;
-            app.versionText.Layout.Column = 2;
-            app.versionText.Text = 'v0.1 (2026.03.23)';
+            app.versionText.Layout.Column = 3;
+            app.versionText.Text = 'v0.1';
 
-            app.releaseLabel = uilabel(app.projectLayout);
+            app.releaseLabel = uilabel(app.infoLayout);
             app.releaseLabel.HorizontalAlignment = 'center';
-            app.releaseLabel.FontSize = 18;
-            app.releaseLabel.FontWeight = 'bold';
+            app.releaseLabel.FontSize = 15;
             app.releaseLabel.Layout.Row = 2;
             app.releaseLabel.Layout.Column = 1;
             app.releaseLabel.Text = '发布地址';
 
-            app.releaseLink = uihyperlink(app.projectLayout);
-            app.releaseLink.FontSize = 14;
+            app.releaseDotLabel = uilabel(app.infoLayout);
+            app.releaseDotLabel.FontSize = 15;
+            app.releaseDotLabel.Layout.Row = 2;
+            app.releaseDotLabel.Layout.Column = 2;
+            app.releaseDotLabel.Text = '•';
+
+            app.releaseLink = uihyperlink(app.infoLayout);
+            app.releaseLink.FontSize = 15;
+            app.releaseLink.FontWeight = 'normal';
             app.releaseLink.Layout.Row = 2;
-            app.releaseLink.Layout.Column = 2;
+            app.releaseLink.Layout.Column = 3;
             app.releaseLink.URL = 'https://github.com/archive-chan/MultiTrainControlPlantform';
             app.releaseLink.Text = 'MultiTrainControlPlantform';
 
-            app.licenseLabel = uilabel(app.projectLayout);
+            app.licenseLabel = uilabel(app.infoLayout);
             app.licenseLabel.HorizontalAlignment = 'center';
-            app.licenseLabel.FontSize = 18;
-            app.licenseLabel.FontWeight = 'bold';
+            app.licenseLabel.FontSize = 15;
             app.licenseLabel.Layout.Row = 3;
             app.licenseLabel.Layout.Column = 1;
             app.licenseLabel.Text = '许可协议';
 
-            app.licenseLink = uihyperlink(app.projectLayout);
-            app.licenseLink.FontSize = 14;
+            app.licenseDotLabel = uilabel(app.infoLayout);
+            app.licenseDotLabel.FontSize = 15;
+            app.licenseDotLabel.Layout.Row = 3;
+            app.licenseDotLabel.Layout.Column = 2;
+            app.licenseDotLabel.Text = '•';
+
+            app.licenseLink = uihyperlink(app.infoLayout);
+            app.licenseLink.FontSize = 15;
+            app.licenseLink.FontWeight = 'normal';
             app.licenseLink.Layout.Row = 3;
-            app.licenseLink.Layout.Column = 2;
+            app.licenseLink.Layout.Column = 3;
             app.licenseLink.URL = 'https://github.com/archive-chan/MultiTrainControlPlantform/blob/main/LICENSE';
             app.licenseLink.Text = 'MIT';
 
-            app.developerLabel = uilabel(app.projectLayout);
-            app.developerLabel.HorizontalAlignment = 'center';
-            app.developerLabel.FontSize = 18;
-            app.developerLabel.FontWeight = 'bold';
-            app.developerLabel.Layout.Row = 4;
-            app.developerLabel.Layout.Column = 1;
-            app.developerLabel.Text = '开发者';
-
-            app.developerLink = uihyperlink(app.projectLayout);
-            app.developerLink.FontSize = 14;
-            app.developerLink.Layout.Row = 4;
-            app.developerLink.Layout.Column = 2;
-            app.developerLink.URL = 'https://github.com/archive-chan';
-            app.developerLink.Text = 'archive-chan';
-
-            app.infoPanel = uipanel(app.aboutLayout);
-            app.infoPanel.BorderType = 'none';
-            app.infoPanel.Title = '信息';
-            app.infoPanel.Layout.Row = 5;
-            app.infoPanel.Layout.Column = [1 2];
-            app.infoPanel.FontSize = 18;
-
-            app.infoLayout = uigridlayout(app.infoPanel);
-            app.infoLayout.ColumnWidth = {'fit', '1x'};
-            app.infoLayout.RowHeight = {'1x', '1x', '1x'};
-
             app.subjectLabel = uilabel(app.infoLayout);
             app.subjectLabel.HorizontalAlignment = 'center';
-            app.subjectLabel.FontSize = 18;
-            app.subjectLabel.FontWeight = 'bold';
-            app.subjectLabel.Layout.Row = 1;
+            app.subjectLabel.FontSize = 15;
+            app.subjectLabel.Layout.Row = 4;
             app.subjectLabel.Layout.Column = 1;
             app.subjectLabel.Text = '题目';
 
+            app.subjectDotLabel = uilabel(app.infoLayout);
+            app.subjectDotLabel.FontSize = 15;
+            app.subjectDotLabel.Layout.Row = 4;
+            app.subjectDotLabel.Layout.Column = 2;
+            app.subjectDotLabel.Text = '•';
+
             app.subjectText = uilabel(app.infoLayout);
-            app.subjectText.FontSize = 14;
-            app.subjectText.Layout.Row = 1;
-            app.subjectText.Layout.Column = 2;
+            app.subjectText.FontSize = 15;
+            app.subjectText.Layout.Row = 4;
+            app.subjectText.Layout.Column = 3;
             app.subjectText.Text = '多列车协同控制系统的 MATLAB GUI 仿真平台开发';
 
             app.authorLabel = uilabel(app.infoLayout);
             app.authorLabel.HorizontalAlignment = 'center';
-            app.authorLabel.FontSize = 18;
-            app.authorLabel.FontWeight = 'bold';
-            app.authorLabel.Layout.Row = 2;
+            app.authorLabel.FontSize = 15;
+            app.authorLabel.Layout.Row = 5;
             app.authorLabel.Layout.Column = 1;
             app.authorLabel.Text = '作者';
 
+            app.authorDotLabel = uilabel(app.infoLayout);
+            app.authorDotLabel.FontSize = 15;
+            app.authorDotLabel.Layout.Row = 5;
+            app.authorDotLabel.Layout.Column = 2;
+            app.authorDotLabel.Text = '•';
+
             app.authorText = uilabel(app.infoLayout);
-            app.authorText.FontSize = 14;
-            app.authorText.Layout.Row = 2;
-            app.authorText.Layout.Column = 2;
+            app.authorText.FontSize = 15;
+            app.authorText.Layout.Row = 5;
+            app.authorText.Layout.Column = 3;
             app.authorText.Text = '郑浩';
 
             app.supervisorLabel = uilabel(app.infoLayout);
-            app.supervisorLabel.FontSize = 18;
-            app.supervisorLabel.FontWeight = 'bold';
-            app.supervisorLabel.Layout.Row = 3;
+            app.supervisorLabel.HorizontalAlignment = 'center';
+            app.supervisorLabel.FontSize = 15;
+            app.supervisorLabel.Layout.Row = 6;
             app.supervisorLabel.Layout.Column = 1;
             app.supervisorLabel.Text = '指导老师';
 
+            app.supervisorDotLabel = uilabel(app.infoLayout);
+            app.supervisorDotLabel.FontSize = 15;
+            app.supervisorDotLabel.Layout.Row = 6;
+            app.supervisorDotLabel.Layout.Column = 2;
+            app.supervisorDotLabel.Text = '•';
+
             app.supervisorText = uilabel(app.infoLayout);
-            app.supervisorText.FontSize = 14;
-            app.supervisorText.Layout.Row = 3;
-            app.supervisorText.Layout.Column = 2;
+            app.supervisorText.FontSize = 15;
+            app.supervisorText.Layout.Row = 6;
+            app.supervisorText.Layout.Column = 3;
             app.supervisorText.Text = '张志鑫';
 
+            % restorePanel
+            app.restorePanel = uipanel(app.aboutLayout);
+            app.restorePanel.BorderType = 'none';
+            app.restorePanel.Title = ' ';
+            app.restorePanel.Layout.Row = 4;
+            app.restorePanel.Layout.Column = 1;
 
+            app.restoreLayout = uigridlayout(app.restorePanel);
+            app.restoreLayout.ColumnWidth = {'fit'};
+            app.restoreLayout.RowHeight = {'fit'};
+
+            app.restoreButton = uibutton(app.restoreLayout, 'push');
+            app.restoreButton.FontSize = 13;
+            app.restoreButton.Tooltip = {'清除所有参数配置、账号信息和历史记录'};
+            app.restoreButton.Layout.Row = 1;
+            app.restoreButton.Layout.Column = 1;
+            app.restoreButton.Text = '还原初始数据';
+            app.restoreButton.ButtonPushedFcn = createCallbackFcn(app,@restoreBtnPushed);
         end
 
         function setPage(app, page)
@@ -2846,6 +2918,17 @@ classdef MainWindow < matlab.apps.AppBase
 
 
 
+        end
+
+        function restoreBtnPushed(app,event)
+            choice = uiconfirm(app.uiFigure,'确定要清除所有数据（包括参数配置、账号信息和历史记录）并还原初始数据吗?','还原初始数据',"Options",["确定还原","我再想想"],"DefaultOption",2,"CancelOption",2);
+            if strcmp (choice, '确定还原')
+                rmdir('params','s');
+                app.m_dbCenter.delete;
+                notify(app,'Restore');
+
+                main();
+            end
         end
 
         function stepTimerFunc(app)

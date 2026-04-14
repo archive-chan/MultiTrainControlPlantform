@@ -2,12 +2,13 @@ function main()
     close all;clear;clc;
 
     loginWin = LoginWindow();
-    mainWin = MainWindow(); 
+    mainWin = MainWindow();
 
     addlistener(loginWin, 'Login', @(~,~)loginFunc(loginWin, mainWin));
     addlistener(loginWin, 'Exit', @(~,~)exitFunc(loginWin, mainWin));
     addlistener(mainWin, 'Logout', @(~,~)logoutFunc(loginWin, mainWin));
     addlistener(mainWin, 'Exit', @(~,~)exitFunc(loginWin, mainWin));
+    addlistener(mainWin, 'Restore', @(~,~)restoreFunc(loginWin, mainWin));
 end
 
 function loginFunc(loginApp, mainApp)
@@ -21,6 +22,14 @@ function logoutFunc(loginApp, mainApp)
 end   
 
 function exitFunc(loginApp, mainApp)
+    delete(loginApp);
+    delete(mainApp);
+end  
+
+function restoreFunc(loginApp, mainApp)
+    loginApp.m_dbCenter.delete;
+    rmdir('db', 's');
+
     delete(loginApp);
     delete(mainApp);
 end  
