@@ -116,7 +116,7 @@ classdef JsonHelper < handle
 
             defaultJson.advanParam.delayParam = struct();
             defaultJson.advanParam.delayParam.enable = true;
-            defaultJson.advanParam.delayParam.delayMode = 'Smith预估器';
+            defaultJson.advanParam.delayParam.delayMode = '匀速预测';
             defaultJson.advanParam.delayParam.fixDelay = 1.5;
             defaultJson.advanParam.delayParam.flucDelay = 0.4;
 

@@ -502,7 +502,7 @@ classdef MainWindow < matlab.apps.AppBase
             app.sideSimulPanel.Title = '仿真';
             app.sideSimulPanel.Layout.Row = 1;
             app.sideSimulPanel.Layout.Column = 1;
-            app.sideSimulPanel.FontSize = 16;
+            app.sideSimulPanel.FontSize = 15;
 
             app.sideSimulLayout = uigridlayout(app.sideSimulPanel);
             app.sideSimulLayout.ColumnWidth = {'1x'};
@@ -537,7 +537,7 @@ classdef MainWindow < matlab.apps.AppBase
             app.sideSystemPanel.Title = '系统';
             app.sideSystemPanel.Layout.Row = 2;
             app.sideSystemPanel.Layout.Column = 1;
-            app.sideSystemPanel.FontSize = 16;
+            app.sideSystemPanel.FontSize = 15;
 
             app.sideSystemLayout = uigridlayout(app.sideSystemPanel);
             app.sideSystemLayout.ColumnWidth = {'1x'};
@@ -560,7 +560,7 @@ classdef MainWindow < matlab.apps.AppBase
             app.sideStatusPanel.Title = '状态';
             app.sideStatusPanel.Layout.Row = 3;
             app.sideStatusPanel.Layout.Column = 1;
-            app.sideStatusPanel.FontSize = 16;
+            app.sideStatusPanel.FontSize = 15;
 
             app.sideStatusLayout = uigridlayout(app.sideStatusPanel);
             app.sideStatusLayout.ColumnWidth = {'1x', '1x', '1x'};
@@ -580,7 +580,7 @@ classdef MainWindow < matlab.apps.AppBase
             app.mainPanel = uipanel(app.uiLayout);
             app.mainPanel.Layout.Row = 2;
             app.mainPanel.Layout.Column = 2;
-            app.mainPanel.FontSize = 16;
+            app.mainPanel.FontSize = 15;
 
             app.mainLayout = uigridlayout(app.mainPanel);
             app.mainLayout.ColumnWidth = {'1x'};
@@ -633,15 +633,14 @@ classdef MainWindow < matlab.apps.AppBase
             app.simulBasisPanel.FontSize = 14;
 
             app.simulBasisLayout = uigridlayout(app.simulBasisPanel);
-            app.simulBasisLayout.ColumnWidth = {'fit', 216, 'fit', 216};
+            app.simulBasisLayout.ColumnWidth = {'fit', 150, 'fit', 150};
             app.simulBasisLayout.RowHeight = {'fit'};
             app.simulBasisLayout.Padding = [5 5 5 5];
 
             app.frequencyLabel = uilabel(app.simulBasisLayout);
             app.frequencyLabel.Layout.Row = 1;
             app.frequencyLabel.Layout.Column = 1;
-            app.frequencyLabel.Text = '采样时间';
-            app.frequencyLabel.HorizontalAlignment = 'right';
+            app.frequencyLabel.Text = '采样时间dt (s)';
 
             app.frequencySpinner = uispinner(app.simulBasisLayout);
             app.frequencySpinner.Layout.Row = 1;
@@ -652,8 +651,7 @@ classdef MainWindow < matlab.apps.AppBase
             app.totalTimeLabel = uilabel(app.simulBasisLayout);
             app.totalTimeLabel.Layout.Row = 1;
             app.totalTimeLabel.Layout.Column = 3;
-            app.totalTimeLabel.Text = '总时长';
-            app.totalTimeLabel.HorizontalAlignment = 'right';
+            app.totalTimeLabel.Text = '总时长T (s)';
 
             app.totalTimeSpinner = uispinner(app.simulBasisLayout);
             app.totalTimeSpinner.Layout.Row = 1;
@@ -671,15 +669,15 @@ classdef MainWindow < matlab.apps.AppBase
             app.trainParamPanel.FontSize = 14;
 
             app.trainParamLayout = uigridlayout(app.trainParamPanel);
-            app.trainParamLayout.ColumnWidth = {'fit', 216, 'fit', 216, 'fit', 216};
+            app.trainParamLayout.ColumnWidth = {'fit', 150, 'fit', 150, 'fit', 150};
             app.trainParamLayout.RowHeight = {'fit', 'fit'};
             app.trainParamLayout.Padding = [5 5 5 5];
 
             app.trainNumLabel = uilabel(app.trainParamLayout);
             app.trainNumLabel.Layout.Row = 1;
             app.trainNumLabel.Layout.Column = 1;
-            app.trainNumLabel.Text = '列车数量';
-            app.trainNumLabel.HorizontalAlignment = 'right';
+            app.trainNumLabel.Text = '列车数量N';
+            app.trainNumLabel.HorizontalAlignment = 'center';
 
             app.trainNumSpinner = uispinner(app.trainParamLayout);
             app.trainNumSpinner.Layout.Row = 1;
@@ -690,8 +688,8 @@ classdef MainWindow < matlab.apps.AppBase
             app.trainLengthLabel = uilabel(app.trainParamLayout);
             app.trainLengthLabel.Layout.Row = 1;
             app.trainLengthLabel.Layout.Column = 3;
-            app.trainLengthLabel.Text = '列车长度';
-            app.trainLengthLabel.HorizontalAlignment = 'right';
+            app.trainLengthLabel.Text = '列车长度L (m)';
+            app.trainLengthLabel.HorizontalAlignment = 'center';
             
             app.trainLengthSpinner = uispinner(app.trainParamLayout);
             app.trainLengthSpinner.Layout.Row = 1;
@@ -702,8 +700,7 @@ classdef MainWindow < matlab.apps.AppBase
             app.trainSpacingLabel = uilabel(app.trainParamLayout);
             app.trainSpacingLabel.Layout.Row = 1;
             app.trainSpacingLabel.Layout.Column = 5;
-            app.trainSpacingLabel.Text = '列车间距';
-            app.trainSpacingLabel.HorizontalAlignment = 'right';
+            app.trainSpacingLabel.Text = '列车间距d (m)';
 
             app.trainSpacingSpinner = uispinner(app.trainParamLayout);
             app.trainSpacingSpinner.Layout.Row = 1;
@@ -714,8 +711,7 @@ classdef MainWindow < matlab.apps.AppBase
             app.startPosiLabel = uilabel(app.trainParamLayout);
             app.startPosiLabel.Layout.Row = 2;
             app.startPosiLabel.Layout.Column = 1;
-            app.startPosiLabel.Text = '初始位置';
-            app.startPosiLabel.HorizontalAlignment = 'right';
+            app.startPosiLabel.Text = '初始位置p0 (m)';
 
             app.startPosiEditField = uieditfield(app.trainParamLayout, 'text');
             app.startPosiEditField.Layout.Row = 2;
@@ -725,7 +721,7 @@ classdef MainWindow < matlab.apps.AppBase
             app.startVeloLabel = uilabel(app.trainParamLayout);
             app.startVeloLabel.Layout.Row = 2;
             app.startVeloLabel.Layout.Column = 3;
-            app.startVeloLabel.Text = '初始速度';
+            app.startVeloLabel.Text = '初始速度v0 (m/s)';
             app.startVeloLabel.HorizontalAlignment = 'right';
 
             app.startVeloEditField = uieditfield(app.trainParamLayout, 'text');
@@ -743,7 +739,7 @@ classdef MainWindow < matlab.apps.AppBase
             app.leaderTrajPanel.FontSize = 14;
 
             app.leaderTrajLayout = uigridlayout(app.leaderTrajPanel);
-            app.leaderTrajLayout.ColumnWidth = {'fit', 216, 'fit', 216, 'fit', 216};
+            app.leaderTrajLayout.ColumnWidth = {'fit', 150, 'fit', 150, 'fit', 150};
             app.leaderTrajLayout.RowHeight = {'fit'};
             app.leaderTrajLayout.Padding = [5 5 5 5];
 
@@ -751,7 +747,6 @@ classdef MainWindow < matlab.apps.AppBase
             app.trajDesignLabel.Layout.Row = 1;
             app.trajDesignLabel.Layout.Column = 1;
             app.trajDesignLabel.Text = '轨迹设计';
-            app.trajDesignLabel.HorizontalAlignment = 'right';
 
             app.trajDesignDropDown = uidropdown(app.leaderTrajLayout);
             app.trajDesignDropDown.Layout.Row = 1;
@@ -762,8 +757,7 @@ classdef MainWindow < matlab.apps.AppBase
             app.trajPosiLabel = uilabel(app.leaderTrajLayout);
             app.trajPosiLabel.Layout.Row = 1;
             app.trajPosiLabel.Layout.Column = 3;
-            app.trajPosiLabel.Text = '位置轨迹';
-            app.trajPosiLabel.HorizontalAlignment = 'right';
+            app.trajPosiLabel.Text = '位置轨迹 (s,m)';
 
             app.trajPosiEditField = uieditfield(app.leaderTrajLayout, 'text');
             app.trajPosiEditField.Layout.Row = 1;
@@ -773,8 +767,7 @@ classdef MainWindow < matlab.apps.AppBase
             app.trajVeloLabel = uilabel(app.leaderTrajLayout);
             app.trajVeloLabel.Layout.Row = 1;
             app.trajVeloLabel.Layout.Column = 5;
-            app.trajVeloLabel.Text = '速度轨迹';
-            app.trajVeloLabel.HorizontalAlignment = 'right';
+            app.trajVeloLabel.Text = '速度轨迹 (s,m/s)';
 
             app.trajVeloEditField = uieditfield(app.leaderTrajLayout, 'text');
             app.trajVeloEditField.Layout.Row = 1;
@@ -791,7 +784,7 @@ classdef MainWindow < matlab.apps.AppBase
             app.topologyPanel.FontSize = 14;
 
             app.topologyLayout = uigridlayout(app.topologyPanel);
-            app.topologyLayout.ColumnWidth = {'fit', 216};
+            app.topologyLayout.ColumnWidth = {'fit', 150};
             app.topologyLayout.RowHeight = {'fit'};
             app.topologyLayout.Padding = [5 5 5 5];
 
@@ -799,7 +792,6 @@ classdef MainWindow < matlab.apps.AppBase
             app.currentTopologyLabel.Layout.Row = 1;
             app.currentTopologyLabel.Layout.Column = 1;
             app.currentTopologyLabel.Text = '当前拓扑';
-            app.currentTopologyLabel.HorizontalAlignment = 'right';
 
             app.currentTopologyDropDown = uidropdown(app.topologyLayout);
             app.currentTopologyDropDown.Layout.Row = 1;
@@ -817,7 +809,7 @@ classdef MainWindow < matlab.apps.AppBase
             app.ctrlParamsPanel.FontSize = 14;
 
             app.ctrlParamsLayout = uigridlayout(app.ctrlParamsPanel);
-            app.ctrlParamsLayout.ColumnWidth = {'fit', 216, 'fit', 216};
+            app.ctrlParamsLayout.ColumnWidth = {'fit', 150, 'fit', 150};
             app.ctrlParamsLayout.RowHeight = {'fit'};
             app.ctrlParamsLayout.Padding = [5 5 5 5];
 
@@ -825,7 +817,6 @@ classdef MainWindow < matlab.apps.AppBase
             app.KpLabel.Layout.Row = 1;
             app.KpLabel.Layout.Column = 1;
             app.KpLabel.Text = '位置系数Kp';
-            app.KpLabel.HorizontalAlignment = 'right';
 
             app.KpSpinner = uispinner(app.ctrlParamsLayout);
             app.KpSpinner.Layout.Row = 1;
@@ -837,7 +828,6 @@ classdef MainWindow < matlab.apps.AppBase
             app.KvLabel.Layout.Row = 1;
             app.KvLabel.Layout.Column = 3;
             app.KvLabel.Text = '速度系数Kv';
-            app.KvLabel.HorizontalAlignment = 'right';
 
             app.KvSpinner = uispinner(app.ctrlParamsLayout);
             app.KvSpinner.Layout.Row = 1;
@@ -855,15 +845,14 @@ classdef MainWindow < matlab.apps.AppBase
             app.physicalPanel.FontSize = 14;
 
             app.physicalLayout = uigridlayout(app.physicalPanel);
-            app.physicalLayout.ColumnWidth = {'fit', 216, 'fit', 216, 'fit', 216};
+            app.physicalLayout.ColumnWidth = {'fit', 150, 'fit', 150, 'fit', 150};
             app.physicalLayout.RowHeight = {'fit', 'fit'};
             app.physicalLayout.Padding = [5 5 5 5];
 
             app.veloLimitLabel = uilabel(app.physicalLayout);
             app.veloLimitLabel.Layout.Row = 1;
             app.veloLimitLabel.Layout.Column = 1;
-            app.veloLimitLabel.Text = '速度限幅';
-            app.veloLimitLabel.HorizontalAlignment = 'right';
+            app.veloLimitLabel.Text = '速度限幅v_max (m/s)';
 
             app.veloLimitSpinner = uispinner(app.physicalLayout);
             app.veloLimitSpinner.Layout.Row = 1;
@@ -874,8 +863,7 @@ classdef MainWindow < matlab.apps.AppBase
             app.ctrlLimitLabel = uilabel(app.physicalLayout);
             app.ctrlLimitLabel.Layout.Row = 1;
             app.ctrlLimitLabel.Layout.Column = 3;
-            app.ctrlLimitLabel.Text = '控制输入限幅';
-            app.ctrlLimitLabel.HorizontalAlignment = 'right';
+            app.ctrlLimitLabel.Text = '控制输入限幅u_max (m/s²)';
 
             app.ctrlLimitSpinner = uispinner(app.physicalLayout);
             app.ctrlLimitSpinner.Layout.Row = 1;
@@ -886,8 +874,8 @@ classdef MainWindow < matlab.apps.AppBase
             app.c0Label = uilabel(app.physicalLayout);
             app.c0Label.Layout.Row = 2;
             app.c0Label.Layout.Column = 1;
-            app.c0Label.Text = '阻力系数c0';
-            app.c0Label.HorizontalAlignment = 'right';
+            app.c0Label.Text = '阻力系数c0 (N)';
+            app.c0Label.HorizontalAlignment = 'center';
 
             app.c0Spinner = uispinner(app.physicalLayout);
             app.c0Spinner.Layout.Row = 2;
@@ -898,8 +886,8 @@ classdef MainWindow < matlab.apps.AppBase
             app.c1Label = uilabel(app.physicalLayout);
             app.c1Label.Layout.Row = 2;
             app.c1Label.Layout.Column = 3;
-            app.c1Label.Text = '阻力系数c1';
-            app.c1Label.HorizontalAlignment = 'right';
+            app.c1Label.Text = '阻力系数c1 (N·s/m)';
+            app.c1Label.HorizontalAlignment = 'center';
 
             app.c1Spinner = uispinner(app.physicalLayout);
             app.c1Spinner.Layout.Row = 2;
@@ -910,8 +898,7 @@ classdef MainWindow < matlab.apps.AppBase
             app.c2Label = uilabel(app.physicalLayout);
             app.c2Label.Layout.Row = 2;
             app.c2Label.Layout.Column = 5;
-            app.c2Label.Text = '阻力系数c2';
-            app.c2Label.HorizontalAlignment = 'right';
+            app.c2Label.Text = '阻力系数c2 (N·s²/m²)';
 
             app.c2Spinner = uispinner(app.physicalLayout);
             app.c2Spinner.Layout.Row = 2;
@@ -978,7 +965,6 @@ classdef MainWindow < matlab.apps.AppBase
             app.delayLayout.Layout.Column = [1 3];
 
             app.delayModeLabel = uilabel(app.delayLayout);
-            app.delayModeLabel.HorizontalAlignment = 'right';
             app.delayModeLabel.Layout.Row = 1;
             app.delayModeLabel.Layout.Column = 1;
             app.delayModeLabel.Text = '延时模式';
@@ -990,10 +976,9 @@ classdef MainWindow < matlab.apps.AppBase
             app.delayModeDropDown.ValueChangedFcn = createCallbackFcn(app,@paramValueChanged,true);
 
             app.fixDelayLabel = uilabel(app.delayLayout);
-            app.fixDelayLabel.HorizontalAlignment = 'right';
             app.fixDelayLabel.Layout.Row = 1;
             app.fixDelayLabel.Layout.Column = 3;
-            app.fixDelayLabel.Text = '固定延时';
+            app.fixDelayLabel.Text = '固定延时 (s)';
 
             app.fixDelaySpinner = uispinner(app.delayLayout);
             app.fixDelaySpinner.Layout.Row = 1;
@@ -1002,10 +987,9 @@ classdef MainWindow < matlab.apps.AppBase
             app.fixDelaySpinner.ValueChangedFcn = createCallbackFcn(app,@paramValueChanged,true);
 
             app.flucDelayLabel = uilabel(app.delayLayout);
-            app.flucDelayLabel.HorizontalAlignment = 'right';
             app.flucDelayLabel.Layout.Row = 1;
             app.flucDelayLabel.Layout.Column = 5;
-            app.flucDelayLabel.Text = '波动幅度';
+            app.flucDelayLabel.Text = '波动幅度 (s)';
 
             app.flucDelaySpinner = uispinner(app.delayLayout);
             app.flucDelaySpinner.Layout.Row = 1;
@@ -1058,7 +1042,6 @@ classdef MainWindow < matlab.apps.AppBase
             app.noiseModeDropDown.ValueChangedFcn = createCallbackFcn(app,@noiseModeValueChanged,true);
 
             app.frictionNoiseLabel = uilabel(app.noiseLayout);
-            app.frictionNoiseLabel.HorizontalAlignment = 'right';
             app.frictionNoiseLabel.Layout.Row = 1;
             app.frictionNoiseLabel.Layout.Column = 3;
             app.frictionNoiseLabel.Text = '阻力干扰';
@@ -1070,7 +1053,6 @@ classdef MainWindow < matlab.apps.AppBase
             app.frictionNoiseSpinner.ValueChangedFcn = createCallbackFcn(app,@paramValueChanged,true);
 
             app.elecNoiseLabel = uilabel(app.noiseLayout);
-            app.elecNoiseLabel.HorizontalAlignment = 'right';
             app.elecNoiseLabel.Layout.Row = 1;
             app.elecNoiseLabel.Layout.Column = 5;
             app.elecNoiseLabel.Text = '牵引电信号干扰';
@@ -1082,10 +1064,9 @@ classdef MainWindow < matlab.apps.AppBase
             app.elecNoiseSpinner.ValueChangedFcn = createCallbackFcn(app,@paramValueChanged,true);
 
             app.alphaLabel = uilabel(app.noiseLayout);
-            app.alphaLabel.HorizontalAlignment = 'right';
             app.alphaLabel.Layout.Row = 1;
             app.alphaLabel.Layout.Column = 7;
-            app.alphaLabel.Text = '低通滤波系数';
+            app.alphaLabel.Text = '低通滤波系数α';
 
             app.alphaSpinner = uispinner(app.noiseLayout);
             app.alphaSpinner.Layout.Row = 1;
@@ -1203,7 +1184,7 @@ classdef MainWindow < matlab.apps.AppBase
             %% aboutLayout
             app.aboutLayout = uigridlayout(app.mainPanel);
             app.aboutLayout.ColumnWidth = {'1x'};
-            app.aboutLayout.RowHeight = {'fit', 30, 'fit', 'fit', '1x'};
+            app.aboutLayout.RowHeight = {'fit', 10, 'fit', 'fit', '1x'};
             app.aboutLayout.Visible = "off";
 
             % titleLayout
@@ -1242,7 +1223,7 @@ classdef MainWindow < matlab.apps.AppBase
             app.infoLayout.RowHeight = {'1x', '1x', '1x', '1x', '1x', '1x'};
             app.infoLayout.ColumnSpacing = 0;
             app.infoLayout.RowSpacing = 5;
-            app.infoLayout.Padding = [0 0 0 5];
+            app.infoLayout.Padding = [0 0 0 20];
 
             app.versionLabel = uilabel(app.infoLayout);
             app.versionLabel.HorizontalAlignment = 'center';
@@ -1581,15 +1562,7 @@ classdef MainWindow < matlab.apps.AppBase
             app.currentParamsDropDown.Value = 'default';
             currentParamsValueChanged(app); % 手动调用
             app.energyRealtimeTextArea.Value = '';
-
-            updateHistoryList(app);
-            app.historyRecordDropDown.Items = app.m_historyRecordList;
-            if ~isempty(app.m_historyRecordList)
-                app.historyRecordDropDown.Value = app.historyRecordDropDown.Items{end};
-                historyValueChanged(app);
-            end    
-            
-
+       
             % 仿真可视化
             cla(app.animeAxes);
             cla(app.positionAxes);
@@ -1608,7 +1581,19 @@ classdef MainWindow < matlab.apps.AppBase
             legend(app.errorAxes,'off');
             legend(app.controlInputAxes,'off');
 
+            % 防止 research 的时候有条线
+            if app.m_currentScenario ~= 'research'
+                yline(app.animeAxes, 0, '-', 'LineWidth', 1);
+            end
+
             % 历史记录
+            updateHistoryList(app);
+            app.historyRecordDropDown.Items = app.m_historyRecordList;
+            if ~isempty(app.m_historyRecordList)
+                app.historyRecordDropDown.Value = app.historyRecordDropDown.Items{end};
+                historyValueChanged(app);
+            end  
+
         end
 
         function calculateResult(app)
@@ -2487,6 +2472,8 @@ classdef MainWindow < matlab.apps.AppBase
             app.m_errorLines = gobjects(trainNum, 1);
             app.m_controlInputLines = gobjects(trainNum, 1);
 
+            yline(app.animeAxes, 0, '-', 'LineWidth', 1);
+
             colors = lines(trainNum);
             for trainIndex = 1:trainNum
                 app.m_animeRectangles(trainIndex) = rectangle(app.animeAxes,'FaceColor',colors(trainIndex,:),'EdgeColor','k','LineWidth',1.5);
@@ -2642,6 +2629,7 @@ classdef MainWindow < matlab.apps.AppBase
                     app.m_velocityLines = gobjects(trainNum, 1);
                     app.m_errorLines = gobjects(trainNum, 1);
                     app.m_controlInputLines = gobjects(trainNum, 1);
+
 
                     colors = lines(trainNum);
                     for trainIndex = 1:trainNum
