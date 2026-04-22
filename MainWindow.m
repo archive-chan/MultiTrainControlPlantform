@@ -717,6 +717,7 @@ classdef MainWindow < matlab.apps.AppBase
             app.startPosiEditField.Layout.Row = 2;
             app.startPosiEditField.Layout.Column = 2;
             app.startPosiEditField.ValueChangedFcn = createCallbackFcn(app,@paramValueChanged,true);
+            app.startPosiEditField.Tooltip = '领航车初始位置为0,且相邻列车位置差不少于列车长度L';
 
             app.startVeloLabel = uilabel(app.trainParamLayout);
             app.startVeloLabel.Layout.Row = 2;
@@ -728,6 +729,7 @@ classdef MainWindow < matlab.apps.AppBase
             app.startVeloEditField.Layout.Row = 2;
             app.startVeloEditField.Layout.Column = 4;
             app.startVeloEditField.ValueChangedFcn = createCallbackFcn(app,@paramValueChanged,true);
+            app.startVeloEditField.Tooltip = '初始速度满足速度限幅';
 
             % leaderTraj
             app.leaderTrajPanel = uipanel(app.basicParamLayout);
@@ -763,6 +765,7 @@ classdef MainWindow < matlab.apps.AppBase
             app.trajPosiEditField.Layout.Row = 1;
             app.trajPosiEditField.Layout.Column = 4;
             app.trajPosiEditField.ValueChangedFcn = createCallbackFcn(app,@paramValueChanged,true);
+            app.trajPosiEditField.Tooltip = '领航车关键位置随时间递增';
 
             app.trajVeloLabel = uilabel(app.leaderTrajLayout);
             app.trajVeloLabel.Layout.Row = 1;
@@ -773,6 +776,7 @@ classdef MainWindow < matlab.apps.AppBase
             app.trajVeloEditField.Layout.Row = 1;
             app.trajVeloEditField.Layout.Column = 6;
             app.trajVeloEditField.ValueChangedFcn = createCallbackFcn(app,@paramValueChanged,true);
+            app.trajVeloEditField.Tooltip = '速度满足速度限幅';
 
             % topology
             app.topologyPanel = uipanel(app.basicParamLayout);
@@ -1073,6 +1077,7 @@ classdef MainWindow < matlab.apps.AppBase
             app.alphaSpinner.Layout.Column = 8;
             app.alphaSpinner.HorizontalAlignment = 'left';
             app.alphaSpinner.ValueChangedFcn = createCallbackFcn(app,@paramValueChanged,true);
+            app.alphaSpinner.Tooltip = '数值越小,滤波越强';
 
             % energy
             app.energyParamPanel = uipanel(app.advanParamLayout);
@@ -2157,6 +2162,12 @@ classdef MainWindow < matlab.apps.AppBase
         end    
 
         function paramSaveBtnPushed(app,event)
+            [success err] = legalVerify(app);
+            if ~success
+                uialert(app.uiFigure,err,'保存');
+                return;
+            end    
+
             app.isParamSaved = true;
             app.uiFigure.Name = '多列车协同控制系统仿真平台';
 
@@ -3105,5 +3116,207 @@ classdef MainWindow < matlab.apps.AppBase
             app.historyRecordTable.Data = result;
         end
 
+        function [isSuccess err] = legalVerify(app)
+            isSuccess = false;
+            err = '';
+
+            % 获取参数数据
+            dt = app.frequencySpinner.Value;
+            T = app.totalTimeSpinner.Value;
+            N = app.trainNumSpinner.Value;
+            L = app.trainLengthSpinner.Value;
+            d = app.trainSpacingSpinner.Value;
+            Kp = app.KpSpinner.Value;
+            Kv = app.KvSpinner.Value;
+            vLimit = app.veloLimitSpinner.Value;
+            uLimit = app.ctrlLimitSpinner.Value;
+            c0 = app.c0Spinner.Value;
+            c1 = app.c1Spinner.Value;
+            c2 = app.c2Spinner.Value;
+            fixDelay = app.fixDelaySpinner.Value;
+            flucDelay = app.flucDelaySpinner.Value;
+            fNoise = app.frictionNoiseSpinner.Value;
+            eNoise = app.elecNoiseSpinner.Value;
+            alpha = app.alphaSpinner.Value;
+
+            p0 = app.startPosiEditField.Value;
+            v0 = app.startVeloEditField.Value;
+            pTraj = app.trajPosiEditField.Value;
+            vTraj = app.trajVeloEditField.Value;
+            
+            valueNames = {'采样时间dt','总时长T','列车数量N','列车间距d','阻力系数c0','阻力系数c1','阻力系数c2','波动幅度','牵引电信号干扰',... % 1-9
+                '列车长度L','位置系数Kp','速度系数Kv','速度限幅v_max','控制输入限幅u_max','固定延时','阻力干扰',... % 10-16
+                '低通滤波系数α',... % 17
+                '初始位置p0','初始速度v0','位置轨迹','速度轨迹'}; % 18-21
+            values = [dt, T, N, d, c0, c1, c2, flucDelay, eNoise...
+                L, Kp, Kv, vLimit, uLimit, fixDelay, fNoise...
+                alpha];
+            charValues = {p0, v0, pTraj, vTraj};
+
+            % 校验数字变量的范围
+            % >=编号1 >编号2 ><=编号3
+            valueTypes = [ones(1,9), 2*ones(1,7), 3];
+            % 定义数字范围
+            valueMins = [0.001, 1, 3, 0, 0, 0, 0, 0, 0, zeros(1,7), 0];
+            alphaMax = 1;
+
+            % 校验前17个数字变量
+            isOk = false(1,17);
+            type1Indexs = (valueTypes == 1);
+            isOk(type1Indexs) = (values(type1Indexs) >= valueMins(type1Indexs));
+            type2Indexs = (valueTypes == 2);
+            isOk(type2Indexs) = (values(type2Indexs) > valueMins(type2Indexs));
+            type3Index = (valueTypes == 3);
+            isOk(type3Index) = ((values(type3Index) > valueMins(type3Index)) & (values(type3Index) <= alphaMax));
+
+            % 判断前17个数字变量的err
+            for index = 1:17
+                if ~isOk(index)
+                    if index <= 9
+                        err = sprintf("参数 %s 不满足 >= %d", valueNames{index}, valueMins(index));
+                    elseif index == 17
+                        err = sprintf("参数 %s 不满足 > %d 且 <= %d", valueNames{index}, valueMins(index), alphaMax);
+                    else
+                        err = sprintf("参数 %s 不满足 > %d", valueNames{index}, valueMins(index));
+                    end
+                    return;          
+                end    
+            end
+
+            % 校验约束条件
+            if dt > T
+                err = sprintf("参数 仿真基础 不满足采样时间dt <= 总时长T");
+                return; 
+            elseif flucDelay > fixDelay
+                err = sprintf("参数 延时参数 不满足波动幅度 <= 固定延时");
+                return;
+            end    
+
+            % 校验特殊格式
+            % 初始状态基本格式: N-1 个逗号(,)分隔的 N 个 double 序列
+            pattern = sprintf('^-?\\d+(?:\\.\\d+)?(?:,-?\\d+(?:\\.\\d+)?){%d}$', N-1);
+            for index = 1:2
+                str = charValues{index};
+
+                % 校验基本格式
+                isValid = ~isempty(regexp(str, pattern, 'once'));
+                if ~isValid
+                    err = sprintf("参数 %s 不满足基本格式\n由N-1个逗号(,)分隔的double序列(无空格)",valueNames{17+index});
+                    return; 
+                end 
+                
+                % 校验位置和速度各自的条件
+                strarr = strsplit(str, ',');
+                arr = str2double(strarr);
+                if index == 1
+                    % 初始位置
+                    if arr(1) ~= 0
+                        % 第一个数值不为0
+                        err = sprintf("参数 %s 不满足领航车的初始位置必须为0!",valueNames{17+index});
+                        return; 
+                    end     
+                    for arridx = 1:length(arr)-1
+                        diffs = arr(arridx) - arr(arridx+1);
+                        absDiff = abs(diffs);
+                        
+                        if absDiff < L
+                            % 相邻两车的位置差必须>=L
+                            err = sprintf("参数 %s 不满足相邻列车的初始位置必须>=列车长度L!",valueNames{17+index});
+                            return; 
+                        end    
+
+                    end
+                else
+                    % 初始速度
+                    for arridx = 1:length(arr)
+                        if arr(arridx) > vLimit
+                            % 初始速度不能超过速度限幅
+                            err = sprintf("参数 %s 不满足初始速度不能超过速度限幅!",valueNames{17+index});
+                            return; 
+                        end    
+                    end
+                end             
+            end
+
+            % 领航车状态轨迹基本格式: 由分号(;)分隔的多个 t数字,数字 片段，无首尾分号，无空格
+            numPattern = '-?\d+(?:\.\d+)?'; % 匹配可正可负、可带小数的数字
+            pattern2 = sprintf('^%s%s,%s(?:;%s%s,%s)*$', 't', numPattern, numPattern, 't', numPattern, numPattern);
+            for trajIdx = 3:4
+                str = charValues{trajIdx};
+                if isempty(regexp(str, pattern2, 'once'));
+                    % 基本格式不满足
+                    err = sprintf("参数 %s 不满足基本格式\n由分号(;)分隔的多个 t数字,数字 片段，无首尾分号，无空格",valueNames{17+trajIdx});
+                    return; 
+                end
+
+                % 按分号分割 检查每个片段的关键时间点t
+                fragments = strsplit(str, ';');
+                for i = 1:length(fragments)
+                    frag = fragments{i};
+                    % 去掉开头的固定字符t
+                    if frag(1) ~= 't'
+                        % 缺失t字符 
+                        err = sprintf("参数 %s 不满足基本格式\n关键时间点缺失字符t",valueNames{17+trajIdx});
+                        return; 
+                    end
+                    xyPart = frag(2:end); % 得到 "x,y"
+                    xy = strsplit(xyPart, ',');
+                    if length(xy) ~= 2
+                        % x或y缺失
+                        err = sprintf("参数 %s 不满足基本格式\n关键时间点或关键某时间点状态缺失",valueNames{17+trajIdx});
+                        return; 
+                    end
+                    x = str2double(xy{1});
+                    y = str2double(xy{2});
+                    if isnan(x) || isnan(y) || x <= 0 || x > T
+                        % 时间关键点不满足　0 < t <= T
+                        err = sprintf("参数 %s 不满足基本格式\n关键时间点不满足 > 0 且 <= 总时长T",valueNames{17+trajIdx});
+                        return; 
+                    end
+                end
+
+                % 校验位置和速度各自的条件
+                % 获取y并提取到数组
+                frags = split(str, ';');
+                yValues = zeros(1, length(frags));
+                for i = 1:length(frags);
+                    parts = split(frags{i}, ',');
+                    yValues(i) = str2double(parts{2});
+                end
+                
+                if trajIdx == 3
+                    % 位置
+                    if (~isempty(yValues)) && numel(yValues) > 1
+                        if any(isnan(yValues))
+                            % yValue出现NaN
+                            err = sprintf("参数 %s 不满足关键位置不能为空!",valueNames{17+trajIdx});
+                            return; 
+                        end 
+                        
+                        % 计算相邻差值
+                        nextDiff = diff(yValues);
+                        isIncreacing = all(nextDiff>=0);
+
+                        if ~isIncreacing
+                            % 不满足位置随时间递增
+                            err = sprintf("参数 %s 不满足关键位置随时间递增!",valueNames{17+trajIdx});
+                            return; 
+                        end    
+                    end    
+                else
+                    % 速度
+                    for vIdx = 1:length(yValues)
+                        if yValues(vIdx) > vLimit
+                            % 不满足速度限幅
+                            err = sprintf("参数 %s 不满足关键速度符合速度限幅!",valueNames{17+trajIdx});
+                            return; 
+                        end    
+                    end
+                end        
+            end
+        
+            % 所有条件都满足
+            isSuccess = true;
+        end    
     end
 end
