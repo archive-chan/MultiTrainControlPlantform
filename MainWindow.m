@@ -2037,6 +2037,7 @@ classdef MainWindow < matlab.apps.AppBase
             paramsName = app.currentParamsDropDown.Value;
             paramsStruct = app.m_jsonHelper.getParamsStruct(paramsName);
 
+            % 基本参数
             basicParamStruct = paramsStruct.basicParam;
             simulBasisStruct = basicParamStruct.simulBasis;
             trainParamStruct = basicParamStruct.trainParam;
@@ -2087,51 +2088,112 @@ classdef MainWindow < matlab.apps.AppBase
             app.c1Spinner.Value = physicalStruct.c1;
             app.c2Spinner.Value = physicalStruct.c2;
 
+            % 高级参数
             advanParamStruct = paramsStruct.advanParam;
             delayStruct = advanParamStruct.delayParam;
             noiseStruct = advanParamStruct.noiseParam;
             energyStruct = advanParamStruct.energyParam;
 
-            if advanParamStruct.enable
+            advanEnable = advanParamStruct.enable;
+            delayEnable = delayStruct.enable;
+            noiseEnable = noiseStruct.enable;
+            energyEnable = energyStruct.enable;
+            if advanEnable
                 app.advanParamSwitch.Value = 'On';
             else
                 app.advanParamSwitch.Value = 'Off';
-            end
-
-            if delayStruct.enable
-                app.delayParamSwitch.Value = 'On';
-            else
-                app.delayParamSwitch.Value = 'Off';
-            end
+            end        
             app.delayModeDropDown.Value = delayStruct.delayMode;        
             app.fixDelaySpinner.Value = delayStruct.fixDelay;
             app.flucDelaySpinner.Value = delayStruct.flucDelay;
-
-            if noiseStruct.enable
-                app.noiseParamSwitch.Value = 'On';
+            if delayEnable
+                app.delayParamSwitch.Value = 'On';
             else
-                app.noiseParamSwitch.Value = 'Off';
-            end
-            app.noiseModeDropDown.Value = noiseStruct.noiseMode;
-            noiseMode = app.noiseModeDropDown.Value;
-            if strcmp(noiseMode,'无干扰补偿')
-                app.alphaLabel.Enable = "off";
-                app.alphaSpinner.Enable = "off";
-            elseif strcmp(noiseMode,'干扰观测器')
-                app.alphaLabel.Enable = "on";
-                app.alphaSpinner.Enable = "on";
-            end  
+                app.delayParamSwitch.Value = 'Off';
+            end        
+
+            noiseMode = noiseStruct.noiseMode;
+            app.noiseModeDropDown.Value = noiseMode;
             app.frictionNoiseSpinner.Value = noiseStruct.frictionNoise;
             app.elecNoiseSpinner.Value = noiseStruct.elecNoise;
             app.alphaSpinner.Value = noiseStruct.alpha;
-            
-            if energyStruct.enable
+            if noiseEnable
+                app.noiseParamSwitch.Value = 'On';
+            else
+                app.noiseParamSwitch.Value = 'Off';
+            end        
+
+            if energyEnable
                 app.energyParamSwitch.Value = 'On';
             else
                 app.energyParamSwitch.Value = 'Off';
             end        
 
-            
+            % 根据配置启用和禁用控件
+            if advanEnable
+                app.delayParamLabel.Enable = "on";
+                app.delayParamSwitch.Enable = "on";
+                app.noiseParamLabel.Enable = "on";
+                app.noiseParamSwitch.Enable = "on";
+                app.energyParamLabel.Enable = "on";
+                app.energyParamSwitch.Enable = "on"; 
+
+                if delayEnable
+                    app.delayModeLabel.Enable = "on";
+                    app.delayModeDropDown.Enable = "on";
+                    app.fixDelayLabel.Enable = "on";
+                    app.fixDelaySpinner.Enable = "on";
+                    app.flucDelayLabel.Enable = "on";
+                    app.flucDelaySpinner.Enable = "on";
+                end
+
+                if noiseEnable
+                app.noiseModeLabel.Enable = "on";
+                app.noiseModeDropDown.Enable = "on";
+                app.frictionNoiseLabel.Enable = "on";
+                app.frictionNoiseSpinner.Enable = "on";
+                app.elecNoiseLabel.Enable = "on";
+                app.elecNoiseSpinner.Enable = "on";
+                    if strcmp(noiseMode, '干扰观测器')
+                        app.alphaLabel.Enable = "on";
+                        app.alphaSpinner.Enable = "on";
+                    else
+                        app.alphaLabel.Enable = "off";
+                        app.alphaSpinner.Enable = "off";
+                    end        
+                end
+
+                if energyEnable
+                    app.energyRealtimeLabel.Enable = "on";
+                    app.energyRealtimeTextArea.Enable = "on";  
+                end  
+            else
+                app.delayParamLabel.Enable = "off";
+                app.delayParamSwitch.Enable = "off";
+                app.noiseParamLabel.Enable = "off";
+                app.noiseParamSwitch.Enable = "off";
+                app.energyParamLabel.Enable = "off";
+                app.energyParamSwitch.Enable = "off";
+
+                app.delayModeLabel.Enable = "off";
+                app.delayModeDropDown.Enable = "off";
+                app.fixDelayLabel.Enable = "off";
+                app.fixDelaySpinner.Enable = "off";
+                app.flucDelayLabel.Enable = "off";
+                app.flucDelaySpinner.Enable = "off";
+
+                app.noiseModeLabel.Enable = "off";
+                app.noiseModeDropDown.Enable = "off";
+                app.frictionNoiseLabel.Enable = "off";
+                app.frictionNoiseSpinner.Enable = "off";
+                app.elecNoiseLabel.Enable = "off";
+                app.elecNoiseSpinner.Enable = "off";
+                app.alphaLabel.Enable = "off";
+                app.alphaSpinner.Enable = "off";
+
+                app.energyRealtimeLabel.Enable = "off";
+                app.energyRealtimeTextArea.Enable = "off";
+            end  
         end 
  
         function paramValueChanged(app,event)
