@@ -107,7 +107,7 @@ MultiTrainControlPlantform/
 
 项目链接：[https://github.com/archive-chan/MultiTrainControlPlantform](https://github.com/archive-chan/MultiTrainControlPlantform)
 
-本项目基于 [MIT License](LICENSE) 开源。
+本项目基于 [MIT License](LICENSE) 开源
 
 默认管理员账号
 | 用户名 | 密码 | 场景 |
