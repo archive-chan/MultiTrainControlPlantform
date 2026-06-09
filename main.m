@@ -27,9 +27,14 @@ function exitFunc(loginApp, mainApp)
 end  
 
 function restoreFunc(loginApp, mainApp)
+    rmdir('params','s');
+    
     loginApp.m_dbCenter.delete;
+    mainApp.m_dbCenter.delete;
     rmdir('db', 's');
 
     delete(loginApp);
     delete(mainApp);
+
+    main();
 end  

@@ -2493,19 +2493,18 @@ classdef MainWindow < matlab.apps.AppBase
 
             progressDialog = uiprogressdlg(app.uiFigure,'Title','仿真计算中……','Indeterminate','on');
 
+            % 改变状态
+            setStatus(app,'正在运行');
+
             % 计算各个变量的结果
             calculateResult(app);
 
             writeResult(app);
 
-            % 改变状态
-            setStatus(app,'正在运行');
-
             updateHistoryList(app);
             app.historyRecordDropDown.Items = app.m_historyRecordList;
             app.historyRecordDropDown.Value = app.historyRecordDropDown.Items{end};
             historyValueChanged(app);
-
 
             % 准备好计时器的预设参数
             timeVector = app.m_lastResult{5};
@@ -2624,17 +2623,13 @@ classdef MainWindow < matlab.apps.AppBase
 
             switch app.m_currentScenario
                 case 'teaching'
+                    app.m_stepNumGone = 0;
                     switch app.m_currentStatus
                         case '正在运行'
                             stop(app.m_stepTimer);
-                            app.m_stepNumGone = 0;
                         case '已暂停'
-                            app.m_stepNumGone = 0;
                         case '回放中'     
                             stop(app.m_stepTimer);
-                            app.m_stepNumGone = 0;
-                        otherwise
-                            
                     end
 
                     % 直接画最后的结果
@@ -2984,11 +2979,8 @@ classdef MainWindow < matlab.apps.AppBase
         function restoreBtnPushed(app,event)
             choice = uiconfirm(app.uiFigure,'确定要清除所有数据（包括参数配置、账号信息和历史记录）并还原初始数据吗?','还原初始数据',"Options",["确定还原","我再想想"],"DefaultOption",2,"CancelOption",2);
             if strcmp (choice, '确定还原')
-                rmdir('params','s');
-                app.m_dbCenter.delete;
                 notify(app,'Restore');
-
-                main();
+                
             end
         end
 
