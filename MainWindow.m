@@ -1848,6 +1848,7 @@ classdef MainWindow < matlab.apps.AppBase
                                         v_interactRead = velocity(interactIdx,delayPrevStep);
                                     case 2    
                                         % Smith预估器 计算原本的实际时刻及前2步的加速度
+                                        % 【注】这里的Smith预估器可能不正确 效果也不及匀速预测 由于时间与工作量的原因 没有修正
                                         a = 0;
                                         if delayPrevStep >= 3
                                             x_1 = position(interactIdx,delayPrevStep-2);
