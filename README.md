@@ -59,10 +59,11 @@ MultiTrainControlPlantform/
 ├── main.m                  # 程序入口
 ├── LoginWindow.m           # 登录窗口
 ├── MainWindow.m            # 主窗口
-├── DBCenter.m              # SQLite 数据库操作封装
-├── JsonHelper.m            # JSON 参数配置文件操作封装
+├── DBCenter.m              # SQLite 数据库操作封装类
+├── JsonHelper.m            # JSON 参数配置文件操作封装类
 ├── LICENSE                 # MIT 许可证
 ├── README.md               # 本文件
+├── account.xlsx            # 管理员端账号导入参考数据表
 ├── db/
 │   └── local.db            # SQLite 数据库文件（账号数据、仿真记录）
 ├── params/
